@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f615bd3196e31504bb0073a0e57caf74, type: 3}
+  m_Name: SO_TreeData
+  m_EditorClassIdentifier: 
+  maximumWoods: 100
+  woods: 10
+  woodsprites:
+  - {fileID: 21300000, guid: 5db8d14b0361b09419e7b1045de8be61, type: 3}
+  - {fileID: 21300000, guid: 7b22f7ce99b107e478b6076e60c0ecde, type: 3}
+  - {fileID: 21300000, guid: 59a9ec3ce14d2dd4bb9802716657e31c, type: 3}
+  cutSound: {fileID: 0}

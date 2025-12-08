@@ -1,0 +1,56 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!78 &1
+TagManager:
+  serializedVersion: 2
+  tags:
+  - Food
+  layers:
+  - Default
+  - TransparentFX
+  - Ignore Raycast
+  - Player
+  - Water
+  - UI
+  - Food
+  - Obstacle
+  - Base
+  - Tree
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  m_SortingLayers:
+  - name: Default
+    uniqueID: 0
+    locked: 0
+  - name: First Tile Layer
+    uniqueID: 2717156637
+    locked: 0
+  - name: Second Tile Layer
+    uniqueID: 3443518257
+    locked: 0
+  - name: UI
+    uniqueID: 3559198389
+    locked: 0
+  - name: Agent
+    uniqueID: 2395102539
+    locked: 0

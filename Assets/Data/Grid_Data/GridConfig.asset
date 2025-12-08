@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c6d32517d835e2346a26f9b17a2449dd, type: 3}
+  m_Name: GridConfig
+  m_EditorClassIdentifier: 
+  width: 25
+  height: 25
+  seed: 102
+  defaultTile: {fileID: 11400000, guid: e69382a8d7fc8d643b20822a496b8544, type: 2}
+  tilePalette:
+  - tileType: {fileID: 11400000, guid: 4d59898ad248fd145bb1ae91a6f926fe, type: 2}
+    weight: 0.03
+  - tileType: {fileID: 11400000, guid: 07af52264beb6a34cbc139a4afe1df86, type: 2}
+    weight: 0.01
+  - tileType: {fileID: 11400000, guid: 9168de355ade7364e8c6f4920ee42471, type: 2}
+    weight: 0.03
