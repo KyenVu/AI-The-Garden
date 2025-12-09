@@ -22,6 +22,10 @@ public class AgentAI : MonoBehaviour
     public LayerMask treeLayer;
     public float treeSearchRadius = 10f;
 
+    [Header("Construction Settings")]
+    public GameObject cookingStation;
+    //public GameObject sawmill;
+
     //[Header("UI")]
     //public AgentStateUI stateUI;
 
@@ -35,6 +39,8 @@ public class AgentAI : MonoBehaviour
         bb.baseRef = FindAnyObjectByType<FireBase>();
         bb.dayNight = FindAnyObjectByType<DayNight>();
 
+        bb.cookingStationPrefab = cookingStation;
+
         bb.foodLayer = foodLayer;
         bb.waterLayer = waterLayer;
         bb.treeLayer = treeLayer;
@@ -44,12 +50,23 @@ public class AgentAI : MonoBehaviour
         bb.treeSearchRadius = treeSearchRadius;
 
         // Build BT using blackboard-powered nodes
+
+        var findConsumableFoodSelector = new Selector(new List<Node>
+    {
+        new FindStationFoodNode(bb), // PRIORITY 1: Check Cooking Station
+        new FindFoodNode(bb)         // PRIORITY 2: Check World Food
+    });
+
+        // --- HUNGER SEQUENCE ---
+
         var hungerSequence = new MemorySequence(new List<Node> {
             new IsHungryNode(bb, 0.25f),
-            new FindFoodNode(bb),
+            findConsumableFoodSelector,
             new MoveToDestinationNode(bb),
             new EatFoodNode(bb.stats, bb.mover, bb.ui)
         });
+
+        // --- THIRST SEQUENCE ---
 
         var thirstSequence = new MemorySequence(new List<Node> {
             new IsThirstyNode(bb, 0.25f),
@@ -57,6 +74,8 @@ public class AgentAI : MonoBehaviour
             new MoveToDestinationNode(bb),
             new DrinkWaterNode(bb.stats, bb.mover, bb.ui)
         });
+
+        // --- CHOP WOOD SEQUENCE ---
 
         var chopWoodSequence = new MemorySequence(new List<Node> {
             new IsMissingWoodNode(bb.baseRef),
@@ -69,6 +88,8 @@ public class AgentAI : MonoBehaviour
             new DepositNode(bb)
         });
 
+        // --- GATHER FOOD SEQUENCE ---
+
         var gatherFoodSequence = new MemorySequence(new List<Node> {
             new IsBaseStorageNeededNode(bb, ResourceType.Food),
             new IsInventoryNotFullNode(bb, ResourceType.Food),
@@ -80,6 +101,8 @@ public class AgentAI : MonoBehaviour
             new DepositNode(bb)
         });
 
+        // --- GATHER WATER SEQUENCE ---
+
         var gatherWaterSequence = new MemorySequence(new List<Node> {
             new IsBaseStorageNeededNode(bb, ResourceType.Water),
             new IsInventoryNotFullNode(bb, ResourceType.Water),
@@ -90,12 +113,30 @@ public class AgentAI : MonoBehaviour
             new MoveToDestinationNode(bb),
             new DepositNode(bb)
         });
+        // --- NIGHT REST SEQUENCE ---
 
         var nightRestSequence = new MemorySequence(new List<Node> {
             new IsNightNode(bb), // Condition: Is it night?
             new FindBaseNode(bb), // Reuse FindBaseNode to set the currentTarget (the base)
             new MoveToDestinationNode(bb),
             new RestNode(bb)
+        });
+        // --- BUILD COOKING STATION SEQUENCE ---
+
+        var buildStationSequence = new MemorySequence(new List<Node> {
+            new IsCookingStationNeededNode(bb), // Condition: Base Food <= 10 AND no station
+            new FindBuildSiteNode(bb),             // Targets a neighbor tile near the base (due to your modification)
+            new MoveToDestinationNode(bb),
+            new BuildCookingStationNode(bb)    // Action: Build and deduct cost
+        });
+
+        // ---  UPGRADE SEQUENCE ---
+
+        var upgradeStationSequence = new MemorySequence(new List<Node> {
+            new IsCookingStationReadyForUpgradeNode(bb),
+            new SetUpgradeTargetNode(bb),
+            new MoveToDestinationNode(bb),
+            new UpgradeCookingStationNode(bb)
         });
 
         // Selector for Base Maintenance 
@@ -117,6 +158,8 @@ public class AgentAI : MonoBehaviour
             nightRestSequence,
             thirstSequence,
             hungerSequence,
+            buildStationSequence,
+            upgradeStationSequence,
             agentLifestyle // This becomes the new default behavior
         });
 

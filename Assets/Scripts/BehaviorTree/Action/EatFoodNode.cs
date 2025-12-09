@@ -1,3 +1,5 @@
+// File: Scripts/BehaviorTree/Action/EatFoodNode.cs (MODIFIED to handle Station)
+
 using UnityEngine;
 
 public class EatFoodNode : Node
@@ -20,36 +22,58 @@ public class EatFoodNode : Node
     {
         if (mover.currentTarget == null || !mover.HasReachedDestination())
         {
-            stateUI?.SetState("Moving to Food...");
+            stateUI?.SetState("Moving to Food Source...");
             return _state = NodeState.Running;
         }
 
-        Debug.Log(mover.HasReachedDestination());
-        // Simulate eating duration
         stateUI?.SetState("Eating...");
         eatTimer += Time.deltaTime;
 
         if (eatTimer >= eatDuration)
         {
-            Food food = mover.currentTarget.GetComponent<Food>();
+            eatTimer = 0f;
 
+            // --- NEW: Handle consumption from CookingStation ---
+            CookingStation station = mover.currentTarget.GetComponent<CookingStation>();
+            if (station != null)
+            {
+                if (station.cookedFoodAvailable > 0)
+                {
+                    // Use station's gather method (which provides stats/rest bonus)
+                    int nutritionValue = station.GatherFood(stats);
+                    stats.EatFood(nutritionValue);
+                    station.cookedFoodAvailable -= nutritionValue; // Deduct the consumed amount from station's storage
+
+                    station.ReleaseClaim(mover.gameObject);
+                    mover.ClearTarget();
+                    return _state = NodeState.Success;
+                }
+                else
+                {
+                    // If food was taken by another agent, fail the consumption
+                    station.ReleaseClaim(mover.gameObject);
+                    mover.ClearTarget();
+                    return _state = NodeState.Failure;
+                }
+            }
+            // ----------------------------------------------------
+
+            // --- Existing: Handle consumption from World Food ---
+            Food food = mover.currentTarget.GetComponent<Food>();
             if (food != null && food.data != null)
             {
                 // Apply hunger + stamina recovery
                 stats.EatFood(food.data.nutritionValue);
                 stats.Rest(food.data.staminaRestore);
 
-                food.OnEaten();
-                if (food.data.destroyAfterEat)
-                    GameObject.Destroy(food.gameObject);
+                food.OnEaten(); // Handles destruction and claim release for world food
             }
             else
             {
-                Debug.LogWarning("Food object missing FoodData!");
+                Debug.LogWarning("Food object missing component or data!");
             }
 
             mover.ClearTarget();
-            eatTimer = 0f;
             return _state = NodeState.Success;
         }
 

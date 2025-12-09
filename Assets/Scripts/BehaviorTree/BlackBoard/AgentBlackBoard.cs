@@ -28,4 +28,8 @@ public class AgentBlackBoard
     public LayerMask foodLayer;
     public LayerMask waterLayer;
     public LayerMask treeLayer;
+
+    // Constructions
+    public GameObject cookingStationPrefab;
+    public GameObject sawmillPrefab;
 }

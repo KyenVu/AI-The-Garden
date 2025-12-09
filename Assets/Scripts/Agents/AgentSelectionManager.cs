@@ -11,6 +11,7 @@ public class AgentSelectionManager : MonoBehaviour
     [Header("UI Reference")]
     public AgentInfoUI infoUI;
     public BaseInfoUI baseUI;
+    public CookingStationInfoUI stationUI;
 
     private Camera mainCamera;
 
@@ -66,53 +67,65 @@ public class AgentSelectionManager : MonoBehaviour
         Vector2 mousePos = mainCamera.ScreenToWorldPoint(Input.mousePosition);
         RaycastHit2D hit = Physics2D.Raycast(mousePos, Vector2.zero);
 
+        // --- CRUCIAL FIX: Reset ALL Contextual UI panels at the start ---
+        baseUI?.HideInfo();
+        stationUI?.HideInfo();
+        DeselectAgent(); // This hides the AgentInfoUI and deselects the agent
+                         // -----------------------------------------------------------------
+
         if (hit.collider != null)
         {
-            // Interactable object
+            // Interactable object (Base, Station, World Resources)
             I_Interactable interactable = hit.collider.GetComponent<I_Interactable>();
             if (interactable != null)
             {
                 FireBase fb = hit.collider.GetComponent<FireBase>();
+                CookingStation station = hit.collider.GetComponent<CookingStation>();
+
                 if (fb != null)
                 {
                     baseUI?.ShowInfo(fb); // Show the base info UI
-                    Debug.Log("Base clicked");
-                    // Prevent AgentInfoUI from popping up if the base is clicked
                 }
+                else if (station != null)
+                {
+                    stationUI?.ShowInfo(station); // Show the station info UI
+                }
+
+                // Note: Clicking a resource (Food/Water/Tree) currently doesn't show a dedicated UI, 
+                // so we only proceed to Interact and OnInteractableClicked.
+
                 interactable.Interact(selectedAgent != null ? selectedAgent.gameObject : null);
                 OnInteractableClicked?.Invoke(interactable);
                 return;
             }
 
-            // Agent
+            // Agent (AgentInfoUI is handled by SelectAgent)
             AgentStatsManager agent = hit.collider.GetComponent<AgentStatsManager>();
             if (agent != null)
             {
-                SelectAgent(agent);
+                SelectAgent(agent); // This calls infoUI?.ShowInfo(agent);
                 OnAgentSelected?.Invoke(agent);
                 return;
             }
         }
-
-        // Empty space
-        DeselectAgent();
+        // If no object was hit, all UIs remain hidden due to the starting reset.
     }
 
     // Handle right-click — command selected agent to interact with something
     private void HandleRightClick()
     {
-        if (selectedAgent == null) return;
+        //if (selectedAgent == null) return;
 
-        Vector2 mousePos = mainCamera.ScreenToWorldPoint(Input.mousePosition);
-        RaycastHit2D hit = Physics2D.Raycast(mousePos, Vector2.zero);
-        if (!hit) return;
+        //Vector2 mousePos = mainCamera.ScreenToWorldPoint(Input.mousePosition);
+        //RaycastHit2D hit = Physics2D.Raycast(mousePos, Vector2.zero);
+        //if (!hit) return;
 
-        I_Interactable interactable = hit.collider.GetComponent<I_Interactable>();
-        if (interactable != null)
-        {
-            Debug.Log($"Commanding {selectedAgent.name} to interact with {hit.collider.name}");
-            interactable.Interact(selectedAgent.gameObject);
-        }
+        //I_Interactable interactable = hit.collider.GetComponent<I_Interactable>();
+        //if (interactable != null)
+        //{
+        //    Debug.Log($"Commanding {selectedAgent.name} to interact with {hit.collider.name}");
+        //    interactable.Interact(selectedAgent.gameObject);
+        //}
     }
 
     // Agent Selection

@@ -20,7 +20,6 @@ public class GatherFoodNode : Node
         // 1. Check if we are still moving, or if the target is invalid
         if (food == null || !bb.mover.HasReachedDestination())
         {
-            bb.ui?.SetState("Moving to BLEEEE...");
             return _state = NodeState.Running;
         }
 
@@ -45,7 +44,7 @@ public class GatherFoodNode : Node
         timer = 0f;
 
         // Use the Food's nutrition value as the amount to gather (e.g., 30 units)
-        int amountToGather = bb.stats.foodHarvestRate;
+        int amountToGather = 5; //bb.stats.foodHarvestRate;
 
         // Add resource to the Agent's Inventory
         int accepted = bb.inventory.AddResource(ResourceType.Food, amountToGather);
