@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   width: 25
   height: 25
-  seed: 102
+  seed: 123
   defaultTile: {fileID: 11400000, guid: e69382a8d7fc8d643b20822a496b8544, type: 2}
   tilePalette:
   - tileType: {fileID: 11400000, guid: 4d59898ad248fd145bb1ae91a6f926fe, type: 2}
