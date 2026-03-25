@@ -34,7 +34,7 @@ public class ChopTreeNode : Node
         //  Inventory full stop chopping
         if (bb.inventory.IsFull(ResourceType.Wood))
         {
-            Debug.Log("Inventory full! Stop chopping.");
+
             bb.ui?.SetState("Inventory full");
 
             tree.ReleaseClaim(bb.mover.gameObject); // RELEASE CLAIM
@@ -46,7 +46,7 @@ public class ChopTreeNode : Node
         }
 
         // Chop animation / delay
-        Debug.Log("Chopping tree...");
+
         bb.ui?.SetState("Chopping...");
 
         timer += Time.deltaTime;
@@ -61,12 +61,12 @@ public class ChopTreeNode : Node
 
         // Add to inventory (may accept less)
         int accepted = bb.inventory.AddResource(ResourceType.Wood, harvestAmount);
-        Debug.Log(bb.inventory.GetAmount(ResourceType.Wood));
+
 
         // If not all wood was accepted inventory full
         if (accepted < harvestAmount)
         {
-            Debug.Log("Inventory became full mid-chop!");
+
 
             tree.ReleaseClaim(bb.mover.gameObject); // RELEASE CLAIM
 

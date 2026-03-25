@@ -40,7 +40,7 @@ public class Food : MonoBehaviour, I_Interactable
 
     public void Interact(GameObject interactor)
     {
-        Debug.Log($"{data.foodName} clicked by {interactor?.name ?? "Player"}");
+        
     }
 
     public void OnHoverEnter() => GetComponentInChildren<SpriteRenderer>().color = Color.yellow;
@@ -54,7 +54,7 @@ public class Food : MonoBehaviour, I_Interactable
             return;
         }
         ReleaseClaim(claimedByAgent);
-        Debug.Log($"{data.foodName} was eaten, restoring {data.nutritionValue} hunger.");
+       
         gm.ReplaceTile(transform.position, gm.gridConfig.defaultTile);
 
         // Optional: Play eat sound

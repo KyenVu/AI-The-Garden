@@ -8,10 +8,10 @@ public class TileData : MonoBehaviour
     public TileType tileType;
     public SpriteRenderer spriteRenderer;
 
-    // NEW: Local override flag (default is true, meaning we defer to tileType.walkable)
+    // Local override flag (default is true, meaning we defer to tileType.walkable)
     private bool _isWalkableOverride = true;
 
-    // MODIFIED: Walkable property checks the local override first
+    //  Walkable property checks the local override first
     public bool Walkable => _isWalkableOverride && tileType != null && tileType.walkable;
 
     public void Init(int x, int y, TileType type)

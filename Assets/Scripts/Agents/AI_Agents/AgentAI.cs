@@ -59,7 +59,7 @@ public class AgentAI : MonoBehaviour
 
         // --- HUNGER SEQUENCE ---
 
-        var hungerSequence = new MemorySequence(new List<Node> {
+        var hungerSequence = new MemorySequence(bb, "Hunger Sequence", new List<Node> {
             new IsHungryNode(bb, 0.25f),
             findConsumableFoodSelector,
             new MoveToDestinationNode(bb),
@@ -68,7 +68,7 @@ public class AgentAI : MonoBehaviour
 
         // --- THIRST SEQUENCE ---
 
-        var thirstSequence = new MemorySequence(new List<Node> {
+        var thirstSequence = new MemorySequence(bb, "Thirst Sequence", new List<Node> {
             new IsThirstyNode(bb, 0.25f),
             new FindWaterNode(bb),
             new MoveToDestinationNode(bb),
@@ -77,7 +77,7 @@ public class AgentAI : MonoBehaviour
 
         // --- CHOP WOOD SEQUENCE ---
 
-        var chopWoodSequence = new MemorySequence(new List<Node> {
+        var chopWoodSequence = new MemorySequence(bb, "ChopWood Sequence", new List<Node> {
             new IsMissingWoodNode(bb.baseRef),
             new IsInventoryNotFullNode(bb, ResourceType.Wood),   // NEW: Ensures agent has space
             new FindTreeNode(bb),
@@ -90,7 +90,7 @@ public class AgentAI : MonoBehaviour
 
         // --- GATHER FOOD SEQUENCE ---
 
-        var gatherFoodSequence = new MemorySequence(new List<Node> {
+        var gatherFoodSequence = new MemorySequence(bb, "Gather Food Sequence", new List<Node> {
             new IsBaseStorageNeededNode(bb, ResourceType.Food),
             new IsInventoryNotFullNode(bb, ResourceType.Food),
             new FindFoodNode(bb),
@@ -103,7 +103,7 @@ public class AgentAI : MonoBehaviour
 
         // --- GATHER WATER SEQUENCE ---
 
-        var gatherWaterSequence = new MemorySequence(new List<Node> {
+        var gatherWaterSequence = new MemorySequence(bb, "Gather Water Sequence", new List<Node> {
             new IsBaseStorageNeededNode(bb, ResourceType.Water),
             new IsInventoryNotFullNode(bb, ResourceType.Water),
             new FindWaterNode(bb),
@@ -115,7 +115,7 @@ public class AgentAI : MonoBehaviour
         });
         // --- NIGHT REST SEQUENCE ---
 
-        var nightRestSequence = new MemorySequence(new List<Node> {
+        var nightRestSequence = new MemorySequence(bb, "night Rest Sequence", new List<Node> {
             new IsNightNode(bb), // Condition: Is it night?
             new FindBaseNode(bb), // Reuse FindBaseNode to set the currentTarget (the base)
             new MoveToDestinationNode(bb),
@@ -123,7 +123,7 @@ public class AgentAI : MonoBehaviour
         });
         // --- BUILD COOKING STATION SEQUENCE ---
 
-        var buildStationSequence = new MemorySequence(new List<Node> {
+        var buildStationSequence = new MemorySequence(bb, "Build Station Sequence", new List<Node> {
             new IsCookingStationNeededNode(bb), // Condition: Base Food <= 10 AND no station
             new FindBuildSiteNode(bb),             // Targets a neighbor tile near the base (due to your modification)
             new MoveToDestinationNode(bb),
@@ -132,7 +132,7 @@ public class AgentAI : MonoBehaviour
 
         // ---  UPGRADE SEQUENCE ---
 
-        var upgradeStationSequence = new MemorySequence(new List<Node> {
+        var upgradeStationSequence = new MemorySequence(bb, "Upgrade Station Sequence", new List<Node> {
             new IsCookingStationReadyForUpgradeNode(bb),
             new SetUpgradeTargetNode(bb),
             new MoveToDestinationNode(bb),
@@ -147,14 +147,14 @@ public class AgentAI : MonoBehaviour
         });
 
         // Gated Lifestyle Sequence (Only runs if agent is well-fed)
-        var agentLifestyle = new MemorySequence(new List<Node> {
+        var agentLifestyle = new MemorySequence(bb, "agent Life Sequence", new List<Node> {
             new IsWellFedNode(bb, 0.3f, 0.15f), // Needs must be high to enter this loop
             baseMaintenanceSelector
         });
 
 
         // --- ROOT SELECTOR 
-        root = new MemorySelector(new List<Node> {
+        root = new MemorySelector(bb, new List<Node> {
             nightRestSequence,
             thirstSequence,
             hungerSequence,

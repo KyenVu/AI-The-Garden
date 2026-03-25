@@ -1,43 +1,43 @@
 using System.Collections.Generic;
-
+/// <summary>
+/// A Composite Node that selects the first child that does not fail. 
+/// It "remembers" the currently running child and resumes from that index on the next tick.
+/// This ensures an agent finishes a committed task before re-evaluating higher-priority branches.
+/// </summary>
 public class MemorySelector : Node
 {
     private List<Node> children;
     private int currentChild = 0;
-
-    public MemorySelector(List<Node> nodes)
+    private AgentBlackBoard bb;
+    
+    public MemorySelector(AgentBlackBoard blackBoard, List<Node> nodes)
     {
-        children = nodes;
+        this.bb = blackBoard;
+        this.children = nodes;
     }
 
     public override NodeState Evaluate()
     {
-        // Continue from the last running child
         for (int i = currentChild; i < children.Count; i++)
         {
             NodeState result = children[i].Evaluate();
+            currentChild = i;
 
             switch (result)
             {
                 case NodeState.Running:
-                    currentChild = i;          // Remember this child
-                    _state = NodeState.Running;
-                    return _state;
+                    return _state = NodeState.Running;
 
                 case NodeState.Success:
-                    currentChild = 0;          // Reset for next tick
-                    _state = NodeState.Success;
-                    return _state;
+                    currentChild = 0;
+                    return _state = NodeState.Success;
 
                 case NodeState.Failure:
-                    // Try next child
-                    continue;
+                    continue; // Try next branch
             }
         }
 
-        // If all children fail
         currentChild = 0;
-        _state = NodeState.Failure;
-        return _state;
+        return _state = NodeState.Failure;
     }
 }

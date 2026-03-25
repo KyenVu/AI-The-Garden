@@ -54,7 +54,6 @@ public class FireBase : MonoBehaviour, I_Interactable, I_Storage
 
     public void Interact(GameObject interactor)
     {
-        Debug.Log($"FireBase clicked by {interactor?.name ?? "Player"}");
 
     }
 
@@ -63,8 +62,6 @@ public class FireBase : MonoBehaviour, I_Interactable, I_Storage
     // -------------------------------------------------------------------------
     public int AddResource(ResourceType type, int amount)
     {
-        Debug.Log($"FireBase: Adding {amount} of {type}");
-        Debug.Log(storage.currentWoodAmount);
         return Deposit(type, amount);
     }
 

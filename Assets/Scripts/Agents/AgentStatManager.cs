@@ -66,7 +66,7 @@ public class AgentStatsManager : MonoBehaviour
     private void OnDeath()
     {
         // TODO: Replace with your agent death logic later
-        Debug.Log($"{name} has died of starvation.");
+        Debug.Log($"{name} has died .");
         Destroy(gameObject, 0.2f);
     }
 

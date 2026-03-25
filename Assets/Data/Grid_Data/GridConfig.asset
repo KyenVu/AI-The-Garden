@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c6d32517d835e2346a26f9b17a2449dd, type: 3}
   m_Name: GridConfig
   m_EditorClassIdentifier: 
-  width: 25
-  height: 25
+  width: 30
+  height: 30
   seed: 123
   defaultTile: {fileID: 11400000, guid: e69382a8d7fc8d643b20822a496b8544, type: 2}
   tilePalette:
@@ -23,3 +23,5 @@ MonoBehaviour:
     weight: 0.01
   - tileType: {fileID: 11400000, guid: 9168de355ade7364e8c6f4920ee42471, type: 2}
     weight: 0.03
+  - tileType: {fileID: 11400000, guid: 33ef17b091761104597845ea6910310e, type: 2}
+    weight: 0.136

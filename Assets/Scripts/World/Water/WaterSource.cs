@@ -85,7 +85,6 @@ public class WaterSource : MonoBehaviour, I_Interactable
         // If empty  replace tile with default tile
         if (currentWaterCapacity <= 0)
         {
-            Debug.Log($"{name} water source DEPLETED. Replacing with default tile.");
             gm.ReplaceTile(transform.position, gm.gridConfig.defaultTile);
             ReleaseClaim(claimedByAgent); // Ensure claim is released if depleted
         }

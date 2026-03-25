@@ -102,7 +102,7 @@ public class GridManager : MonoBehaviour
 
         if (fireplaceTileType != null)
         {
-            Debug.Log($"[GridManager] Placing fireplace at ({centerX},{centerY})");
+
 
             // Destroy whatever tile was there
             if (tiles[centerX, centerY] != null)
@@ -403,7 +403,7 @@ public class GridManager : MonoBehaviour
         // Make sure we're inside grid bounds
         if (tiles == null || x < 0 || y < 0 || x >= tiles.GetLength(0) || y >= tiles.GetLength(1))
         {
-            Debug.LogWarning($"[GridManager] ReplaceTile out of bounds: ({x},{y})");
+
             return;
         }
 
@@ -427,10 +427,32 @@ public class GridManager : MonoBehaviour
         tiles[x, y] = newTile;
 
         OnTileSpawned?.Invoke(newTile);
-        Debug.Log($"[GridManager] Replaced tile at ({x},{y}) with new {newType.id}");
+
     }
 
+    public void UpdateTileWalkability()
+    {
+        // Adjust the radius to slightly less than half a tile to avoid overlapping neighbors
+        float checkRadius = 0.4f;
+        LayerMask obstacleLayer = LayerMask.GetMask("Obstacle");
 
+        foreach (TileData tile in tiles) // Assuming you have a list/array of all tiles
+        {
+            Vector3 worldPos = new Vector3(tile.x, tile.y, 0);
+
+            // Check if any collider on the "Obstacle" layer is at this tile position
+            Collider2D hit = Physics2D.OverlapCircle(worldPos, checkRadius, obstacleLayer);
+
+            if (hit != null)
+            {
+                tile.SetWalkableOverride(false); // Mark as blocked
+            }
+            else
+            {
+                tile.SetWalkableOverride(true);  // Mark as free
+            }
+        }
+    }
 
     /// <summary>
     /// Clears all generated tiles.

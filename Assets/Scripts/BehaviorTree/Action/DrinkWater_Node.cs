@@ -24,7 +24,6 @@ public class DrinkWaterNode : Node
             stateUI?.SetState("Moving to Water...");
             return _state = NodeState.Running;
         }
-        Debug.Log(mover.HasReachedDestination());
         // Begin drinking process
         stateUI?.SetState("Drinking...");
         drinkTimer += Time.deltaTime;

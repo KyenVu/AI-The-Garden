@@ -27,7 +27,6 @@ public class IsWellFedNode : Node
         //food and water must be above threshold, and have stamina.
         bool wellFed = (hungerPct >= effectiveThreshold) && (thirstPct >= effectiveThreshold) && (staminaPct > 0f);
 
-        Debug.Log("Well Fed");
         return _state = (wellFed ? NodeState.Success : NodeState.Failure);
     }
 }

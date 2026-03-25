@@ -1,31 +1,40 @@
 using System.Collections.Generic;
 using UnityEngine;
-
 /// <summary>
-/// A Sequence node that remembers which child was running last.
-/// It continues from that child until the sequence completes.
+/// A Composite Node that executes its children in order. 
+/// Unlike a standard Sequence, it "remembers" the currently running child 
+/// and resumes from that index on the next tick until the entire sequence succeeds or any child fails.
 /// </summary>
 public class MemorySequence : Node
 {
     private List<Node> children;
-    private int currentChild = 0; // keeps track of running child
-
-    public MemorySequence(List<Node> nodes)
+    private int currentChild = 0;
+    private AgentBlackBoard bb;
+    private string sequenceName;
+   
+    public MemorySequence(AgentBlackBoard blackBoard, string name, List<Node> nodes)
     {
-        children = nodes;
+        this.bb = blackBoard;
+        this.sequenceName = name; 
+        this.children = nodes;
     }
 
     public override NodeState Evaluate()
     {
-        // If no children, fail
         if (children == null || children.Count == 0)
             return _state = NodeState.Failure;
 
         while (currentChild < children.Count)
         {
             Node child = children[currentChild];
-            NodeState childState = child.Evaluate();
 
+            // LOGGING: Now uses sequenceName and child class name
+            if (_state != NodeState.Running)
+            {
+                Log(bb, "DECISION", $"[{sequenceName}] Step: <b>{child.GetType().Name}</b>");
+            }
+
+            NodeState childState = child.Evaluate();
             switch (childState)
             {
                 case NodeState.Running:
@@ -33,20 +42,19 @@ public class MemorySequence : Node
                     return _state;
 
                 case NodeState.Failure:
-                    // reset for next run
                     currentChild = 0;
                     _state = NodeState.Failure;
                     return _state;
 
                 case NodeState.Success:
-                    // move to next child
                     currentChild++;
+                    _state = NodeState.Success;
                     break;
             }
         }
 
-        // All children succeeded
-        currentChild = 0; // reset for next evaluation
+        Log(bb, "DECISION", $"[{sequenceName}] <color=green>COMPLETED</color>");
+        currentChild = 0;
         _state = NodeState.Success;
         return _state;
     }

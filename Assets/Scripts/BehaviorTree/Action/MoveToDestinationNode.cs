@@ -18,7 +18,6 @@ public class MoveToDestinationNode : Node
             bb.ui?.SetState("Moving...");
             return _state = NodeState.Running;
         }
-        Debug.Log("Moving");
         bb.ui?.SetState("Arrived");
         return _state = NodeState.Success;
     }

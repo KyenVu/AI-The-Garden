@@ -107,13 +107,12 @@ public class CookingStation : MonoBehaviour, I_Interactable
         {
             level++;
             UpdateVisuals(); // CRUCIAL: Update the sprite after level change!
-            Debug.Log($"Cooking Station upgraded to Level {level} (Cook Time: {GetCurrentCookTime()}s)");
             return true;
         }
         return false;
     }
     // I_Interactable implementation (minimal for now)
-    public void Interact(GameObject interactor) => Debug.Log($"Cooking Station Level: {level}");
+    public void Interact(GameObject interactor) { }
     public void OnHoverEnter() => GetComponentInChildren<SpriteRenderer>().color = Color.magenta;
     public void OnHoverExit() => GetComponentInChildren<SpriteRenderer>().color = Color.white;
 }

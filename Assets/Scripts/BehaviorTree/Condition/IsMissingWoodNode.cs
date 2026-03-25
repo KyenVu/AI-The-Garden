@@ -17,7 +17,6 @@ public class IsMissingWoodNode : Node
             // If no base exists, treat as "missing wood" or error
             return _state = NodeState.Failure;
         }
-        Debug.Log("Checking if fire base is missing wood...");
         return _state = fireBase.HasSpaceFor(ResourceType.Wood)
             ? NodeState.Success
             : NodeState.Failure;
