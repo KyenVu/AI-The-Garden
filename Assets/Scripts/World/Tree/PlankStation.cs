@@ -30,19 +30,11 @@ public class PlankStation : MonoBehaviour, I_Interactable
 
     void Awake()
     {
-        if (Instance == null) Instance = this;
-        else if (Instance != this) Destroy(gameObject);
-
-        sr = GetComponentInChildren<SpriteRenderer>();
-        UpdateVisuals();
-    }
-
-    void Start()
-    {
-        // 1. Calculate the initial footprint and lock the tiles
-        UpdateStationFootprint();
-
-        // 2. THE BIG TRANSFER: Move all existing wood from the Base to here!
+        // ==========================================
+        // THE FIX: Move the wood BEFORE we activate the Singleton!
+        // Because FireBase uses "if (PlankStation.Instance != null)" to proxy, 
+        // doing this right now guarantees we pull from the actual base storage!
+        // ==========================================
         FireBase baseRef = FindObjectOfType<FireBase>();
         if (baseRef != null)
         {
@@ -55,7 +47,20 @@ public class PlankStation : MonoBehaviour, I_Interactable
             }
         }
 
-        // Just in case the base transferred more than 70 wood right at the start!
+        // NOW we activate the Singleton and turn on the Proxy for the rest of the game!
+        if (Instance == null) Instance = this;
+        else if (Instance != this) Destroy(gameObject);
+
+        sr = GetComponentInChildren<SpriteRenderer>();
+        UpdateVisuals();
+    }
+
+    void Start()
+    {
+        // 1. Calculate the initial footprint and lock the tiles
+        UpdateStationFootprint();
+
+        // 2. Just in case the base transferred more than 70 wood right at the start!
         CheckForAutoUpgrade();
     }
 
