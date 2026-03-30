@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9feb8501d9a289b44bdd128711ee0c87, type: 3}
   m_Name: Obstacle Data
   m_EditorClassIdentifier: 
-  id: Food
+  id: Obstacle
   sprite: {fileID: 541479539, guid: dd6d74536bc454e4fa82d0bc76a7adf0, type: 3}
   size: 1
   walkable: 0

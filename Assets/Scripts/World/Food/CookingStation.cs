@@ -39,7 +39,21 @@ public class CookingStation : MonoBehaviour, I_Interactable
         sr = GetComponentInChildren<SpriteRenderer>();
         UpdateVisuals(); // Set initial sprite
     }
+    private void Start()
+    {
+        GridManager gm = FindObjectOfType<GridManager>();
+        Collider2D col = GetComponent<Collider2D>();
 
+        if (gm != null && col != null)
+        {
+            // Lock ALL tiles that fall under this building's collider
+            List<TileData> tilesUnder = gm.GetTilesUnderCollider(col);
+            foreach (TileData tile in tilesUnder)
+            {
+                tile.SetWalkableOverride(false);
+            }
+        }
+    }
     void Update()
     {
         // Only cook if capacity allows

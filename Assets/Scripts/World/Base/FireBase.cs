@@ -1,11 +1,14 @@
 // File: FireBase.cs
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
 
 public class FireBase : MonoBehaviour, I_Interactable, I_Storage
 {
+    public static FireBase Instance { get; private set; }
+
     [Header("Storage (editable)")]
     public FireBaseStorage storage = new FireBaseStorage()
     {
@@ -20,7 +23,6 @@ public class FireBase : MonoBehaviour, I_Interactable, I_Storage
     public UnityEvent<ResourceType> OnStorageFull;
     public UnityEvent<ResourceType> OnStorageEmpty;
     public UnityEvent OnUpgraded;
-
     // C# events
     public event Action<ResourceType, int, int> StorageChanged;
     public event Action<ResourceType> StorageFull;
@@ -31,8 +33,54 @@ public class FireBase : MonoBehaviour, I_Interactable, I_Storage
     [Range(0f, 1f)] public float agentReturnThreshold = 0.6f;
     public int upgradeCostWood = 50;
 
+    [Header("Fog of War")]
+    public int revealRadius = 5; // Change this in inspector to make the safe zone bigger/smaller
+
+    [Header("Global Knowledge Base")]
+    public List<Food> knownFoods = new List<Food>();
+    public List<Tree> knownTrees = new List<Tree>();
+    public List<WaterSource> knownWaters = new List<WaterSource>();
+
+    // Agents will call this method when they arrive at the base
+    // Agents will call this method when they arrive at the base
+    public void SyncKnowledge(AgentBlackBoard bb)
+    {
+        // 1. Clean up destroyed/eaten resources from both memories
+        knownFoods.RemoveAll(x => x == null);
+        knownTrees.RemoveAll(x => x == null);
+        knownWaters.RemoveAll(x => x == null);
+
+        bb.knownFoods.RemoveAll(x => x == null);
+        bb.knownTrees.RemoveAll(x => x == null);
+        bb.knownWaters.RemoveAll(x => x == null);
+
+        int upFood = 0, upWater = 0, upTree = 0;
+        int downFood = 0, downWater = 0, downTree = 0;
+
+        // 2. AGENT UPLOADS TO BASE (Explorer -> Base)
+        foreach (Food f in bb.knownFoods) if (!knownFoods.Contains(f)) { knownFoods.Add(f); upFood++; }
+        foreach (Tree t in bb.knownTrees) if (!knownTrees.Contains(t)) { knownTrees.Add(t); upTree++; }
+        foreach (WaterSource w in bb.knownWaters) if (!knownWaters.Contains(w)) { knownWaters.Add(w); upWater++; }
+
+        // 3. BASE DOWNLOADS TO AGENT (Base -> Worker)
+        foreach (Food f in knownFoods) if (!bb.knownFoods.Contains(f)) { bb.knownFoods.Add(f); downFood++; }
+        foreach (Tree t in knownTrees) if (!bb.knownTrees.Contains(t)) { bb.knownTrees.Add(t); downTree++; }
+        foreach (WaterSource w in knownWaters) if (!bb.knownWaters.Contains(w)) { bb.knownWaters.Add(w); downWater++; }
+
+        // DEBUG PRINTING
+        if (upFood > 0 || upWater > 0 || upTree > 0)
+        {
+            Debug.Log($"<color=green>[UPLOAD]</color> {bb.mover.gameObject.name} taught Base: {upFood} Foods, {upWater} Waters, {upTree} Trees.");
+        }
+
+        if (downFood > 0 || downWater > 0 || downTree > 0)
+        {
+            Debug.Log($"<color=cyan>[DOWNLOAD]</color> {bb.mover.gameObject.name} learned from Base: {downFood} Foods, {downWater} Waters, {downTree} Trees.");
+        }
+    }
     private void Awake()
     {
+        Instance = this;
         // ensure storage is not null and has sane defaults
         if (storage == null)
             storage = new FireBaseStorage();
@@ -43,6 +91,14 @@ public class FireBase : MonoBehaviour, I_Interactable, I_Storage
         storage.currentWoodAmount = Mathf.Clamp(storage.currentWoodAmount, 0, storage.maxWoodAmount);
     }
 
+    private void Start()
+    {
+        GridManager grid = FindAnyObjectByType<GridManager>();
+        if (grid != null)
+        {
+            grid.RevealArea(transform.position, revealRadius);
+        }
+    }
     // I_Interactable
     public void OnHoverEnter() => SetHighlight(true);
     public void OnHoverExit() => SetHighlight(false);
@@ -62,16 +118,30 @@ public class FireBase : MonoBehaviour, I_Interactable, I_Storage
     // -------------------------------------------------------------------------
     public int AddResource(ResourceType type, int amount)
     {
+        if (type == ResourceType.Wood && PlankStation.Instance != null)
+        {
+            PlankStation.Instance.DepositWood(amount);
+            return amount;
+        }
         return Deposit(type, amount);
     }
 
     public int RemoveResource(ResourceType type, int amount)
     {
+        if (type == ResourceType.Wood && PlankStation.Instance != null)
+        {
+            if (PlankStation.Instance.RemoveWood(amount)) return amount;
+            return 0;
+        }
         return Withdraw(type, amount);
     }
 
     public int GetAmount(ResourceType type)
     {
+        if (type == ResourceType.Wood && PlankStation.Instance != null)
+        {
+            return PlankStation.Instance.GetWoodCount();
+        }
         switch (type)
         {
             case ResourceType.Food: return storage.currentFoodAmount;

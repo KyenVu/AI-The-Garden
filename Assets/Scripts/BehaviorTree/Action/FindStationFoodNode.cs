@@ -1,6 +1,5 @@
-// File: Scripts/BehaviorTree/Action/FindStationFoodNode.cs (New File)
-
 using UnityEngine;
+using System.Collections.Generic;
 
 public class FindStationFoodNode : Node
 {
@@ -13,21 +12,44 @@ public class FindStationFoodNode : Node
 
     public override NodeState Evaluate()
     {
-        CookingStation station = CookingStation.Instance;
-
-        // 1. Check if the station exists, has food, and is claimable
-        if (station != null && station.cookedFoodAvailable > 0)
+        if (CookingStation.Instance != null && CookingStation.Instance.cookedFoodAvailable > 0)
         {
-            if (station.TryClaim(bb.mover.gameObject))
+            if (CookingStation.Instance.TryClaim(bb.mover.gameObject))
             {
-                bb.currentTarget = station.transform;
-                bb.mover.SetTarget(station.transform);
-                bb.ui?.SetState($"Hungry! Moving to Cooking Station (Lv.{station.level})");
+                bb.currentTarget = CookingStation.Instance.transform;
+
+                Collider2D stationCollider = CookingStation.Instance.GetComponent<Collider2D>();
+                List<TileData> stationTiles = bb.mover.grid.GetTilesUnderCollider(stationCollider);
+                List<TileData> validNeighbors = new List<TileData>();
+
+                // Get all valid neighbors around the ENTIRE perimeter of the big station
+                foreach (TileData tile in stationTiles)
+                {
+                    foreach (TileData neighbor in bb.mover.grid.GetNeighbors(tile, true))
+                    {
+                        if (neighbor.Walkable && !validNeighbors.Contains(neighbor))
+                        {
+                            validNeighbors.Add(neighbor);
+                        }
+                    }
+                }
+
+                TileData destinationTile = bb.mover.grid.GetClosestTile(bb.mover.transform.position, validNeighbors);
+
+                if (destinationTile == null)
+                {
+                    CookingStation.Instance.ReleaseClaim(bb.mover.gameObject);
+                    bb.ui?.SetState("Food Station is completely surrounded!");
+                    return _state = NodeState.Failure;
+                }
+
+                bb.mover.SetDestinationTile(destinationTile, CookingStation.Instance.transform);
+
+                bb.ui?.SetState("Found Food Station! Moving...");
                 return _state = NodeState.Success;
             }
         }
 
-        // No suitable station found or station claimed
         return _state = NodeState.Failure;
     }
 }

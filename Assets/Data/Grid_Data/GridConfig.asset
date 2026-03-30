@@ -20,7 +20,7 @@ MonoBehaviour:
   - tileType: {fileID: 11400000, guid: 4d59898ad248fd145bb1ae91a6f926fe, type: 2}
     weight: 0.03
   - tileType: {fileID: 11400000, guid: 07af52264beb6a34cbc139a4afe1df86, type: 2}
-    weight: 0.01
+    weight: 0.021
   - tileType: {fileID: 11400000, guid: 9168de355ade7364e8c6f4920ee42471, type: 2}
     weight: 0.03
   - tileType: {fileID: 11400000, guid: 33ef17b091761104597845ea6910310e, type: 2}

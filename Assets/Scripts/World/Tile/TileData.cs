@@ -7,7 +7,9 @@ public class TileData : MonoBehaviour
     public int x, y;
     public TileType tileType;
     public SpriteRenderer spriteRenderer;
-
+    [Header("Fog of War")]
+    public bool isRevealed = false;
+    public SpriteRenderer fogSpriteRenderer; // Drag the child SpriteRenderer here
     // Local override flag (default is true, meaning we defer to tileType.walkable)
     private bool _isWalkableOverride = true;
 
@@ -22,7 +24,6 @@ public class TileData : MonoBehaviour
 
         // Ensure override is true on init
         _isWalkableOverride = true;
-
         // Get SpriteRenderer (root or child)
         if (spriteRenderer == null)
             spriteRenderer = GetComponentInChildren<SpriteRenderer>();
@@ -65,9 +66,19 @@ public class TileData : MonoBehaviour
         }
 
 
+        SetRevealed(false);
         gameObject.name = $"Tile ({x},{y}) - {(tileType ? tileType.id : "None")}";
     }
+    public void SetRevealed(bool revealed)
+    {
+        isRevealed = revealed;
 
+        if (fogSpriteRenderer != null)
+        {
+            // If revealed is true, disable the fog. If false, enable the fog.
+            fogSpriteRenderer.enabled = !isRevealed;
+        }
+    }
     /// <summary>
     /// NEW: Allows external components (like Tree) to mark this tile as unwalkable, overriding the TileType.
     /// </summary>

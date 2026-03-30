@@ -54,3 +54,6 @@ TagManager:
   - name: Agent
     uniqueID: 2395102539
     locked: 0
+  - name: Fog
+    uniqueID: 660509649
+    locked: 0

@@ -1,14 +1,20 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+// --- 1. DEFINE THE ENUM ---
+public enum AgentRole
+{
+    Worker,
+    Explorer
+}
+
 public class AgentAI : MonoBehaviour
 {
     private Node root;
     public AgentBlackBoard bb = new AgentBlackBoard();
 
-    //private AgentStatsManager stats;
-    //private AgentMover mover;
-    //private AgentInventory inventory;
+    [Header("Role Settings")]
+    public AgentRole agentRole = AgentRole.Worker;
 
     [Header("Food Search Settings")]
     public LayerMask foodLayer;
@@ -22,12 +28,15 @@ public class AgentAI : MonoBehaviour
     public LayerMask treeLayer;
     public float treeSearchRadius = 10f;
 
+    [Header("Gossip Settings")]
+    public LayerMask agentLayer;         // <--- NEW: Only scan for this layer
+    public float gossipInterval = 0.5f;  // <--- NEW: Check twice a second
+    private float gossipTimer = 0f;
+
     [Header("Construction Settings")]
     public GameObject cookingStation;
-    //public GameObject sawmill;
-
-    //[Header("UI")]
-    //public AgentStateUI stateUI;
+    public GameObject waterStation;
+    public GameObject plankStation;
 
     void Start()
     {
@@ -40,24 +49,26 @@ public class AgentAI : MonoBehaviour
         bb.dayNight = FindAnyObjectByType<DayNight>();
 
         bb.cookingStationPrefab = cookingStation;
-
+        bb.waterStationPrefab = waterStation;
+        bb.plankStationPrefab = plankStation;
         bb.foodLayer = foodLayer;
         bb.waterLayer = waterLayer;
         bb.treeLayer = treeLayer;
-
         bb.foodSearchRadius = foodSearchRadius;
         bb.waterSearchRadius = waterSearchRadius;
         bb.treeSearchRadius = treeSearchRadius;
 
-        // Build BT using blackboard-powered nodes
-
-        var findConsumableFoodSelector = new Selector(new List<Node>
-    {
-        new FindStationFoodNode(bb), // PRIORITY 1: Check Cooking Station
-        new FindFoodNode(bb)         // PRIORITY 2: Check World Food
-    });
-
-        // --- HUNGER SEQUENCE ---
+        // ==========================================
+        // COMMON SURVIVAL NODES (Shared by ALL roles)
+        // ==========================================
+        var findConsumableFoodSelector = new Selector(new List<Node> {
+            new FindStationFoodNode(bb),
+            new FindFoodNode(bb)
+        });
+        var findConsumableWaterSelector = new Selector(new List<Node> {
+            new FindStationWaterNode(bb), 
+            new FindWaterNode(bb)   
+        });
 
         var hungerSequence = new MemorySequence(bb, "Hunger Sequence", new List<Node> {
             new IsHungryNode(bb, 0.25f),
@@ -66,20 +77,26 @@ public class AgentAI : MonoBehaviour
             new EatFoodNode(bb.stats, bb.mover, bb.ui)
         });
 
-        // --- THIRST SEQUENCE ---
-
         var thirstSequence = new MemorySequence(bb, "Thirst Sequence", new List<Node> {
             new IsThirstyNode(bb, 0.25f),
-            new FindWaterNode(bb),
+            findConsumableWaterSelector,  
             new MoveToDestinationNode(bb),
             new DrinkWaterNode(bb.stats, bb.mover, bb.ui)
         });
 
-        // --- CHOP WOOD SEQUENCE ---
+        var nightRestSequence = new MemorySequence(bb, "Night Rest Sequence", new List<Node> {
+            new IsNightNode(bb),
+            new FindBaseNode(bb),
+            new MoveToDestinationNode(bb),
+            new RestNode(bb)
+        });
 
+        // ==========================================
+        // WORKER-SPECIFIC NODES
+        // ==========================================
         var chopWoodSequence = new MemorySequence(bb, "ChopWood Sequence", new List<Node> {
             new IsMissingWoodNode(bb.baseRef),
-            new IsInventoryNotFullNode(bb, ResourceType.Wood),   // NEW: Ensures agent has space
+            new IsInventoryNotFullNode(bb, ResourceType.Wood),
             new FindTreeNode(bb),
             new MoveToDestinationNode(bb),
             new ChopTreeNode(bb),
@@ -88,50 +105,46 @@ public class AgentAI : MonoBehaviour
             new DepositNode(bb)
         });
 
-        // --- GATHER FOOD SEQUENCE ---
-
         var gatherFoodSequence = new MemorySequence(bb, "Gather Food Sequence", new List<Node> {
             new IsBaseStorageNeededNode(bb, ResourceType.Food),
             new IsInventoryNotFullNode(bb, ResourceType.Food),
             new FindFoodNode(bb),
             new MoveToDestinationNode(bb),
-            new GatherFoodNode(bb), // <<< NEW ACTION NODE
+            new GatherFoodNode(bb),
             new FindBaseNode(bb),
             new MoveToDestinationNode(bb),
             new DepositNode(bb)
         });
-
-        // --- GATHER WATER SEQUENCE ---
 
         var gatherWaterSequence = new MemorySequence(bb, "Gather Water Sequence", new List<Node> {
             new IsBaseStorageNeededNode(bb, ResourceType.Water),
             new IsInventoryNotFullNode(bb, ResourceType.Water),
             new FindWaterNode(bb),
             new MoveToDestinationNode(bb),
-            new GatherWaterNode(bb), // <<< NEW ACTION NODE
+            new GatherWaterNode(bb),
             new FindBaseNode(bb),
             new MoveToDestinationNode(bb),
             new DepositNode(bb)
         });
-        // --- NIGHT REST SEQUENCE ---
 
-        var nightRestSequence = new MemorySequence(bb, "night Rest Sequence", new List<Node> {
-            new IsNightNode(bb), // Condition: Is it night?
-            new FindBaseNode(bb), // Reuse FindBaseNode to set the currentTarget (the base)
+        var buildFoodStationSequence = new MemorySequence(bb, "Build Station Sequence", new List<Node> {
+            new IsCookingStationNeededNode(bb),
+            new FindBuildSiteNode(bb),
             new MoveToDestinationNode(bb),
-            new RestNode(bb)
+            new BuildCookingStationNode(bb)
         });
-        // --- BUILD COOKING STATION SEQUENCE ---
-
-        var buildStationSequence = new MemorySequence(bb, "Build Station Sequence", new List<Node> {
-            new IsCookingStationNeededNode(bb), // Condition: Base Food <= 10 AND no station
-            new FindBuildSiteNode(bb),             // Targets a neighbor tile near the base (due to your modification)
+        var buildWaterStationSequence = new MemorySequence(bb, "Build Water Station Sequence", new List<Node> {
+            new IsWaterStationNeededNode(bb),
+            new FindBuildSiteNode(bb),
             new MoveToDestinationNode(bb),
-            new BuildCookingStationNode(bb)    // Action: Build and deduct cost
+            new BuildWaterStationNode(bb)
         });
-
-        // ---  UPGRADE SEQUENCE ---
-
+        var buildPlankStationSequence = new MemorySequence(bb, "Build Plank Station Sequence", new List<Node> {
+            new IsPlankStationNeededNode(bb),
+            new FindBuildSiteNode(bb),
+            new MoveToDestinationNode(bb),
+            new BuildPlankStationNode(bb)
+        });
         var upgradeStationSequence = new MemorySequence(bb, "Upgrade Station Sequence", new List<Node> {
             new IsCookingStationReadyForUpgradeNode(bb),
             new SetUpgradeTargetNode(bb),
@@ -139,53 +152,80 @@ public class AgentAI : MonoBehaviour
             new UpgradeCookingStationNode(bb)
         });
 
-        // Selector for Base Maintenance 
         var baseMaintenanceSelector = new RandomSelector(new List<Node> {
             chopWoodSequence,
             gatherFoodSequence,
             gatherWaterSequence
         });
 
-        // Gated Lifestyle Sequence (Only runs if agent is well-fed)
-        var agentLifestyle = new MemorySequence(bb, "agent Life Sequence", new List<Node> {
-            new IsWellFedNode(bb, 0.3f, 0.15f), // Needs must be high to enter this loop
+        var agentLifestyle = new MemorySequence(bb, "Agent Life Sequence", new List<Node> {
+            new IsWellFedNode(bb, 0.3f, 0.15f),
             baseMaintenanceSelector
         });
 
-
-        // --- ROOT SELECTOR 
-        root = new MemorySelector(bb, new List<Node> {
-            nightRestSequence,
-            thirstSequence,
-            hungerSequence,
-            buildStationSequence,
-            upgradeStationSequence,
-            agentLifestyle // This becomes the new default behavior
+        // ==========================================
+        // EXPLORER-SPECIFIC NODES
+        // ==========================================
+        var exploreSequence = new MemorySequence(bb, "Explore Sequence", new List<Node> {
+            new PickExplorationTargetNode(bb),
+            new MoveAndScoutNode(bb)
+        });
+      
+        var returnKnowledgeSequence = new MemorySequence(bb, "Return Knowledge Sequence", new List<Node> {
+            new IsReadyToReportNode(bb),
+            new FindBaseNode(bb),
+            new MoveToDestinationNode(bb),
+            new ShareKnowledgeNode(bb)
         });
 
-        //Create PrioritySelector — choose based on NEED SEVERITY
-        //root = new PrioritySelector(
-        //    new List<Node> { thirstSequence, hungerSequence },
-        //    (children) =>
-        //    {
-        //        float hungerUrgency = 1 - bb.stats.hunger.GetPercent();
-        //        float thirstUrgency = 1 - bb.stats.thirst.GetPercent();
-
-        //        if (thirstUrgency > hungerUrgency) return thirstSequence;
-        //        else return hungerSequence;
-        //    }
-        //);
-
+        // ==========================================
+        // ASSEMBLE THE ROOT BASED ON ROLE
+        // ==========================================
+        if (agentRole == AgentRole.Worker)
+        {
+            root = new Selector( new List<Node> {
+                nightRestSequence,
+                thirstSequence,
+                hungerSequence,
+               // buildFoodStationSequence,
+                buildPlankStationSequence,
+                //buildWaterStationSequence,
+                upgradeStationSequence,
+                agentLifestyle
+            });
+        }
+        else if (agentRole == AgentRole.Explorer)
+        {
+            root = new Selector( new List<Node> {
+                nightRestSequence,
+                thirstSequence,
+                hungerSequence,
+                returnKnowledgeSequence,
+                exploreSequence
+            });
+        }
     }
-
 
     void Update()
     {
-        root.Evaluate();  // BT runs every frame
+        if (root != null)
+        {
+
+            root.Evaluate();
+        }
     }
+
+
     private void OnDrawGizmos()
     {
         Gizmos.color = Color.cyan;
-        Gizmos.DrawWireSphere(transform.position, foodSearchRadius); // searchRadius
+        Gizmos.DrawWireSphere(transform.position, foodSearchRadius);
+
+        // Draw the gossip range in green
+        if (bb != null)
+        {
+            Gizmos.color = Color.green;
+            Gizmos.DrawWireSphere(transform.position, bb.communicationRadius);
+        }
     }
 }

@@ -12,39 +12,34 @@ public class DepositNode : Node
 
     public override NodeState Evaluate()
     {
+        bb.baseRef.SyncKnowledge(bb);
+
         if (!bb.mover.HasReachedDestination())
         {
-            bb.ui?.SetState("Moving to base...");
+            bb.ui?.SetState("Moving to deposit location...");
             return _state = NodeState.Running;
         }
 
-        // find nearby FireBase at currentTarget
-        if (bb.mover.currentTarget == null)
-        {
-            bb.ui?.SetState("No base to deposit to");
-            return _state = NodeState.Failure;
-        }
+        // We completely removed the check for "currentTarget.GetComponent<FireBase>()"
+        // Whether they walked to the Plank Station or the Fire Base, we process the 
+        // transaction through bb.baseRef because it acts as our central Proxy Router!
 
-        var fb = bb.mover.currentTarget.GetComponent<FireBase>();
-        if (fb == null)
-        {
-            bb.ui?.SetState("Target is not a base");
-            return _state = NodeState.Failure;
-        }
-
-        // deposit everything (or only specific types)
         foreach (ResourceType t in System.Enum.GetValues(typeof(ResourceType)))
         {
             int have = bb.inventory.GetAmount(t);
             if (have <= 0) continue;
 
-            int moved = bb.inventory.TransferTo(fb, t, have);
+            // bb.baseRef will auto-detect if the resource is Wood and forward it 
+            // to PlankStation.Instance.DepositWood(amount) behind the scenes!
+            int moved = bb.inventory.TransferTo(bb.baseRef, t, have);
             if (moved > 0)
             {
                 bb.ui?.SetState($"Deposited {moved} {t}");
             }
         }
 
+        // Safely clear the target so they can get their next task
+        bb.mover.ClearTarget();
         return _state = NodeState.Success;
     }
 }

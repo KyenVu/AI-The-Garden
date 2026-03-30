@@ -9,7 +9,7 @@ public abstract class Node
     {
         // Format: [AI:AgentName] CATEGORY: Message
         // Use colors: Stats/State = Cyan, Actions = Green, Warnings = Yellow
-        string color = category == "DECISION" ? "cyan" : "white";
-        UnityEngine.Debug.Log($"<b>[AI:{bb.mover.name}]</b> <color={color}>{category}:</color> {message}", bb.mover.gameObject);
+        //string color = category == "DECISION" ? "cyan" : "white";
+        //UnityEngine.Debug.Log($"<b>[AI:{bb.mover.name}]</b> <color={color}>{category}:</color> {message}", bb.mover.gameObject);
     }
 }

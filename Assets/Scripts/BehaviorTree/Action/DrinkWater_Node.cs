@@ -24,17 +24,30 @@ public class DrinkWaterNode : Node
             stateUI?.SetState("Moving to Water...");
             return _state = NodeState.Running;
         }
+
         // Begin drinking process
         stateUI?.SetState("Drinking...");
         drinkTimer += Time.deltaTime;
 
         if (drinkTimer >= drinkDuration)
         {
-            WaterSource source = mover.currentTarget.GetComponent<WaterSource>();
-            if (source != null)
+            // Check for Natural Water Source
+            WaterSource naturalSource = mover.currentTarget.GetComponent<WaterSource>();
+
+            // Check for Built Water Station
+            WaterStation builtStation = mover.currentTarget.GetComponent<WaterStation>();
+
+            if (naturalSource != null)
             {
-                int hydrationGained = source.Drink(stats.drinkRate);
+                int hydrationGained = naturalSource.Drink(stats.drinkRate);
                 stats.DrinkWater(hydrationGained);
+                naturalSource.ReleaseClaim(mover.gameObject);
+            }
+            else if (builtStation != null)
+            {
+                // The built station script we made handles the stat logic inside DrinkWater()
+                builtStation.DrinkWater(stats);
+                builtStation.ReleaseClaim(mover.gameObject);
             }
 
             mover.ClearTarget();

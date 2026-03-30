@@ -82,6 +82,9 @@ public class GridManager : MonoBehaviour
                 TileType chosen = ChooseTileType(config);
                 td.Init(x, y, chosen);
 
+                // --- NEW: Hide the tile only on initial generation ---
+                td.SetRevealed(false);
+
                 // --- CONSOLIDATED RESOURCE TILE HANDLING ---
                 SetupResourceTile(tileGO, td, chosen);
                 // -------------------------------------------
@@ -383,11 +386,41 @@ public class GridManager : MonoBehaviour
         }
         return null;
     }
+    /// <summary>
+    /// Reveals all tiles within a specific radius around a world position.
+    /// </summary>
+    public void RevealArea(Vector3 worldPos, int radius)
+    {
+        TileData centerTile = GetTileAtWorldPosition(worldPos);
+        if (centerTile == null) return;
+
+        // Loop through a grid area around the center tile
+        for (int x = -radius; x <= radius; x++)
+        {
+            for (int y = -radius; y <= radius; y++)
+            {
+                // Calculate the world position of the neighbor tile we want to check
+                Vector3 checkPos = new Vector3(centerTile.x + x, centerTile.y + y, 0);
+                TileData tile = GetTileAtWorldPosition(checkPos);
+
+                if (tile != null)
+                {
+                    // Optional: Make it a circle reveal instead of a square
+                    // float distance = Vector2.Distance(new Vector2(centerTile.x, centerTile.y), new Vector2(tile.x, tile.y));
+                    // if (distance <= radius)
+
+                    tile.SetRevealed(true);
+                }
+            }
+        }
+    }
 
     /// <summary>
     /// Replaces the tile at a world position with a new tile prefab and TileType.
     /// If the old tile object was destroyed, it safely instantiates a new one.
     /// </summary>
+   // Inside GridManager.cs -> ReplaceTile()
+
     public void ReplaceTile(Vector3 worldPos, TileType newType)
     {
         if (newType == null)
@@ -403,15 +436,18 @@ public class GridManager : MonoBehaviour
         // Make sure we're inside grid bounds
         if (tiles == null || x < 0 || y < 0 || x >= tiles.GetLength(0) || y >= tiles.GetLength(1))
         {
-
             return;
         }
 
         TileData oldTile = tiles[x, y];
+        bool wasRevealed = false; // Store the previous fog state
 
         // Destroy the old tile GameObject if it still exists
         if (oldTile != null)
         {
+            // --- NEW: Cache the state before destroying! ---
+            wasRevealed = oldTile.isRevealed;
+
             Destroy(oldTile.gameObject);
             tiles[x, y] = null;
         }
@@ -423,11 +459,13 @@ public class GridManager : MonoBehaviour
         // Initialize with new tile type data
         newTile.Init(x, y, newType);
 
+        // --- NEW: Restore the fog state from the old tile ---
+        newTile.SetRevealed(wasRevealed);
+
         // Store it in the grid array
         tiles[x, y] = newTile;
 
         OnTileSpawned?.Invoke(newTile);
-
     }
 
     public void UpdateTileWalkability()

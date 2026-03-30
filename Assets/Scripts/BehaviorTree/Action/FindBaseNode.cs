@@ -1,66 +1,62 @@
-// File: Scripts/BehaviorTree/Action/FindBaseNode.cs (MODIFIED)
-
 using UnityEngine;
+using System.Collections.Generic;
 
 public class FindBaseNode : Node
 {
     private AgentBlackBoard bb;
 
-    public FindBaseNode(AgentBlackBoard blackBoard)
-    {
-        this.bb = blackBoard;
-    }
+    public FindBaseNode(AgentBlackBoard blackBoard) { this.bb = blackBoard; }
 
     public override NodeState Evaluate()
     {
-        if (bb.baseRef == null || bb.baseRef.gameObject.transform == null)
+        if (bb.baseRef == null) return NodeState.Failure;
+
+        Transform targetTransform = bb.baseRef.transform;
+        string stateMessage = "Returning to Base...";
+
+        // ==========================================
+        // NEW: Route to Plank Station if carrying Wood!
+        // ==========================================
+        if (PlankStation.Instance != null && bb.inventory.Wood > 0)
         {
-            bb.ui?.SetState("Base not set");
-            return _state = NodeState.Failure;
+            targetTransform = PlankStation.Instance.transform;
+            stateMessage = "Moving to Plank Station...";
         }
 
-        GridManager gm = bb.mover.grid;
-        Transform baseTransform = bb.baseRef.gameObject.transform;
+        // ==========================================
+        // Pathfind to a safe edge around the chosen building
+        // ==========================================
+        Collider2D targetCollider = targetTransform.GetComponent<Collider2D>();
+        TileData destinationTile = null;
 
-        // 1. Get the TileData where the base object is located
-        TileData baseTile = gm.GetTileAtWorldPosition(baseTransform.position);
-
-        if (baseTile == null)
+        if (targetCollider != null && bb.mover.grid != null)
         {
-            bb.ui?.SetState("No tile at base");
-            return _state = NodeState.Failure;
+            List<TileData> tilesUnder = bb.mover.grid.GetTilesUnderCollider(targetCollider);
+            List<TileData> validNeighbors = new List<TileData>();
+
+            foreach (TileData tile in tilesUnder)
+            {
+                foreach (TileData neighbor in bb.mover.grid.GetNeighbors(tile, true))
+                {
+                    if (neighbor.Walkable && !tilesUnder.Contains(neighbor) && !validNeighbors.Contains(neighbor))
+                    {
+                        validNeighbors.Add(neighbor);
+                    }
+                }
+            }
+            destinationTile = bb.mover.grid.GetClosestTile(bb.mover.transform.position, validNeighbors);
         }
 
-        // 2. Find Walkable Neighbor Tiles
-        // We use GetNeighbors on the base tile (assuming the base tile is unwalkable)
-        // or on the tiles around the base. If the base tile itself is walkable 
-        // (which is usually true for the base center tile where interaction occurs), 
-        // GetNeighbors will return adjacent tiles.
-        System.Collections.Generic.List<TileData> neighborTiles = gm.GetNeighbors(baseTile);
-
-        TileData finalDestinationTile = null;
-
-        if (neighborTiles.Count > 0)
+        if (destinationTile == null)
         {
-            // NEW LOGIC: Select a random walkable neighbor tile to stand "near" the base.
-            int randomIndex = UnityEngine.Random.Range(0, neighborTiles.Count);
-            finalDestinationTile = neighborTiles[randomIndex];
-            bb.ui?.SetState("Going to tile near base");
-        }
-        else
-        {
-            // Fallback: If no walkable neighbors, set the base tile itself as the target 
-            // (useful for depositing resources directly, or if the tile type allows it).
-            finalDestinationTile = baseTile;
-            bb.ui?.SetState("Going to base tile");
+            bb.ui?.SetState("Target building is completely surrounded!");
+            return NodeState.Failure;
         }
 
-        // 3. Set the destination for the AgentMover
-        Vector3 worldTarget = new Vector3(finalDestinationTile.x, finalDestinationTile.y, 0);
+        bb.currentTarget = targetTransform;
+        bb.mover.SetDestinationTile(destinationTile, targetTransform);
 
-        bb.mover.SetDestinationTile(finalDestinationTile, baseTransform);
-        // Note: SetDestinationTile handles pathfinding from current position to the target tile.
-
-        return _state = NodeState.Success;
+        bb.ui?.SetState(stateMessage);
+        return NodeState.Success;
     }
 }
