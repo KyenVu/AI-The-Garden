@@ -47,7 +47,7 @@ public class FindWaterNode : Node
             {
                 TileData tile = grid.GetTileAtWorldPosition(waterSource.transform.position);
                 // --- FOG REMOVED HERE ---
-                if (tile == null) continue;
+                if (tile == null || !tile.isRevealed) continue;
             }
 
             if (waterSource.IsClaimed == false || waterSource.claimedByAgent == agentObj)

@@ -163,7 +163,7 @@ public class AgentAI_Sem2 : MonoBehaviour
         // ==========================================
         var exploreSequence = new MemorySequence(bb, "Explore Sequence", new List<Node> {
             new PickExplorationTargetNode(bb),
-            new MLMoveToDestinationNode(bb), // Added ML Move for the Explorer
+           // new MLMoveToDestinationNode(bb), // Added ML Move for the Explorer
             new MoveAndScoutNode(bb)
         });
 

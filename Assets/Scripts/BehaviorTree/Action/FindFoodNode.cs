@@ -45,8 +45,10 @@ public class FindFoodNode : Node
             if (grid != null)
             {
                 TileData tile = grid.GetTileAtWorldPosition(foodComponent.transform.position);
-                // --- FOG REMOVED HERE ---
-                if (tile == null) continue;
+
+                // --- FOG RESTORED HERE ---
+                // If the tile doesn't exist, OR it hasn't been explored yet, ignore the food!
+                if (tile == null || !tile.isRevealed) continue;
             }
 
             if (foodComponent.IsClaimed == false || foodComponent.claimedByAgent == agentObj)

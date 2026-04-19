@@ -47,7 +47,7 @@ public class FindTreeNode : Node
             {
                 TileData tile = grid.GetTileAtWorldPosition(treeComponent.transform.position);
                 // --- FOG REMOVED HERE ---
-                if (tile == null) continue;
+                if (tile == null || !tile.isRevealed) continue;
             }
 
             if (treeComponent.IsClaimed == false || treeComponent.claimedByAgent == agentObj)

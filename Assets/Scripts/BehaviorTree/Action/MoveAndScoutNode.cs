@@ -1,67 +1,73 @@
 using UnityEngine;
-using System.Collections.Generic;
 
 public class MoveAndScoutNode : Node
 {
     private AgentBlackBoard bb;
-    private int revealRadius = 2;
 
-    public MoveAndScoutNode(AgentBlackBoard blackBoard) { this.bb = blackBoard; }
+    public MoveAndScoutNode(AgentBlackBoard blackBoard)
+    {
+        this.bb = blackBoard;
+    }
 
     public override NodeState Evaluate()
     {
-        if (bb.currentTarget == null) return NodeState.Failure;
 
-        // ==========================================
-        // 1. SCAN THE GROUND UNDERNEATH THE AGENT
-        // ==========================================
-        TileData currentTile = bb.mover.grid.GetTileAtWorldPosition(bb.mover.transform.position);
-
-        // Did we just step into the fog?
-        if (currentTile != null && !currentTile.isRevealed)
+        // 1. Give the ML Brain the target if it doesn't have it yet
+        if (bb.destinationObject != null && bb.mlBrain != null)
         {
-            // Reveal the area permanently
-            bb.mover.grid.RevealArea(bb.mover.transform.position, revealRadius);
+            Vector2 targetPos = new Vector2(bb.destinationObject.position.x, bb.destinationObject.position.y);
+            bb.mlBrain.SetExternalTarget(targetPos);
+        }
 
-            // Memorize resources seen in the newly cleared area
-            Collider2D[] hits = Physics2D.OverlapCircleAll(bb.mover.transform.position, revealRadius * 1.5f);
-            foreach (Collider2D hit in hits)
+        Transform agentTransform = bb.mlBrain != null ? bb.mlBrain.transform : bb.mover.transform;
+        GridManager grid = bb.mlBrain != null ? bb.mlBrain.gridManager : bb.mover.grid;
+
+        // 2. THE CONTINUOUS SCOUTING CHECK
+        if (grid != null && agentTransform != null)
+        {
+            TileData currentTile = grid.GetTileAtWorldPosition(agentTransform.position);
+
+            // Did we just step on fog?
+            if (currentTile != null && !currentTile.isRevealed)
             {
-                Food f = hit.GetComponent<Food>();
-                if (f != null && !bb.knownFoods.Contains(f)) bb.knownFoods.Add(f);
+                // --- WE HIT FOG! USE GRIDMANAGER TO REVEAL 3x3 ---
+                // Radius 1 around the center tile = a 3x3 square
+                grid.RevealArea(agentTransform.position, 1);
 
-                Tree t = hit.GetComponent<Tree>();
-                if (t != null && !bb.knownTrees.Contains(t)) bb.knownTrees.Add(t);
-
-                WaterSource w = hit.GetComponent<WaterSource>();
-                if (w != null && !bb.knownWaters.Contains(w)) bb.knownWaters.Add(w);
+                bb.fogTilesRevealed++;
+                bb.ui?.SetState($"Revealed {bb.fogTilesRevealed}/3 patches!");
             }
-
-            bb.fogTilesRevealed++;
-           
-            bb.ui?.SetState($"Scouting fog ({bb.fogTilesRevealed}/{bb.maxExplorationsBeforeReturn})");
-
-            // If we hit our reveal limit for this trip, stop and head back
-            if (bb.fogTilesRevealed >= bb.maxExplorationsBeforeReturn)
+            if (bb.fogTilesRevealed >= bb.maxExplorationsBeforeReturn) // Or use bb.maxExplorationsBeforeReturn
             {
-                bb.mover.ClearTarget();
+                bb.ui?.SetState("Limit Reached! Aborting exploration...");
+
+                // Stop moving to the current distant target
+                ClearTargets();
+
+                // Return Success to end the Explore Sequence early
                 return NodeState.Success;
-            }
-            if (!bb.mover.HasReachedDestination())
-            {
-                return NodeState.Running;
             }
         }
 
-        // ==========================================
-        // 2. CONTINUE MOVING
-        // ==========================================
-        if (!bb.mover.HasReachedDestination())
+        // 3. CHECK IF WE REACHED THE TARGET
+        bool hasReached = bb.mlBrain != null ? bb.mlBrain.HasReachedTarget() : bb.mover.HasReachedDestination();
+
+        if (!hasReached)
         {
+            // We haven't reached the target. Keep walking!
             return NodeState.Running;
         }
 
-        bb.currentTarget = null;
+        // 4. WE REACHED THE TARGET
+        ClearTargets();
         return NodeState.Success;
+    }
+
+    private void ClearTargets()
+    {
+        bb.currentTarget = null;
+        bb.destinationObject = null;
+        if (bb.mlBrain != null) bb.mlBrain.ClearTarget();
+        if (bb.mover != null) bb.mover.ClearTarget();
     }
 }

@@ -9,14 +9,26 @@ public class PickExplorationTargetNode : Node
 
     public override NodeState Evaluate()
     {
+        // --- NEW: THE INTERRUPT CHECK ---
+        // If we have already hit the reveal limit, this node must FAIL.
+        // This forces the 'Explore Sequence' to fail so the 'Return Knowledge Sequence' can run.
+        if (bb.fogTilesRevealed >= 3)
+        {
+            return NodeState.Failure;
+        }
+
         // 1. If we already have a target, keep going!
         if (bb.currentTarget != null) return NodeState.Success;
 
-        GridManager grid = bb.mover.grid;
+        // --- UNIVERSAL SETUP ---
+        GridManager grid = bb.mlBrain != null ? bb.mlBrain.gridManager : bb.mover.grid;
+        GameObject agentObj = bb.mlBrain != null ? bb.mlBrain.gameObject : bb.mover.gameObject;
+
+        if (grid == null) return NodeState.Failure;
+
         List<TileData> potentialTargets = new List<TileData>();
 
         // 2. Find ALL tiles that are currently in fog and walkable
-        // We use a broader search to make it feel more random
         for (int i = 0; i < 100; i++)
         {
             TileData randomTile = grid.GetRandomWalkableTile();
@@ -29,21 +41,24 @@ public class PickExplorationTargetNode : Node
         // 3. Pick a random one from the fog pool
         if (potentialTargets.Count > 0)
         {
-            TileData chosen = potentialTargets[Random.Range(0, potentialTargets.Count)];
+            TileData chosen = potentialTargets[UnityEngine.Random.Range(0, potentialTargets.Count)];
 
-            // Create a persistent target object
-            // Find an existing target object, or create one if it doesn't exist
-            GameObject tempTarget = GameObject.Find("ExploreTarget");
+            string targetName = $"ExploreTarget_{agentObj.GetInstanceID()}";
+            GameObject tempTarget = GameObject.Find(targetName);
             if (tempTarget == null)
             {
-                tempTarget = new GameObject("ExploreTarget");
+                tempTarget = new GameObject(targetName);
             }
 
-            // Move it to the new fog location
             tempTarget.transform.position = new Vector3(chosen.x, chosen.y, 0);
 
             bb.currentTarget = tempTarget.transform;
-            bb.mover.SetTarget(bb.currentTarget);
+            bb.destinationObject = tempTarget.transform;
+
+            if (bb.mover != null)
+            {
+                bb.mover.SetTarget(bb.currentTarget);
+            }
 
             bb.ui?.SetState("Picking random fog target...");
             return NodeState.Success;
@@ -52,4 +67,4 @@ public class PickExplorationTargetNode : Node
         bb.ui?.SetState("Map fully explored!");
         return NodeState.Failure;
     }
-}   
+}

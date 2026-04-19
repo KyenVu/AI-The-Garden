@@ -216,7 +216,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 88288788}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f3aaa7308914ac14cb7fa968e287cc81, type: 3}
   m_Name: 
@@ -278,7 +278,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 88288788}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1aa813d8b26bb7b4f9b3fe290637191b, type: 3}
   m_Name: 
@@ -291,6 +291,38 @@ MonoBehaviour:
   gridManager: {fileID: 2036644114}
   moveSpeed: 3
   reachThreshold: 0.5
+--- !u!114 &88288803
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 88288788}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b376c711d5f476641b108e160b83f595, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  agentRole: 0
+  foodLayer:
+    serializedVersion: 2
+    m_Bits: 1088
+  foodSearchRadius: 8
+  waterLayer:
+    serializedVersion: 2
+    m_Bits: 16
+  waterSearchRadius: 8
+  treeLayer:
+    serializedVersion: 2
+    m_Bits: 512
+  treeSearchRadius: 10
+  agentLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  gossipInterval: 0.5
+  cookingStation: {fileID: 7590702291465490526, guid: 8cb3740cfa3f6f34e969bbba31a3283d, type: 3}
+  waterStation: {fileID: 5439671137501523929, guid: 1c06d2bc03f329a4f9ccb6463bf9f7ad, type: 3}
+  plankStation: {fileID: 6639339554601962153, guid: 30fcf1ecaf89a374aac97a56e3174bbd, type: 3}
 --- !u!1 &92540363
 GameObject:
   m_ObjectHideFlags: 0
@@ -2252,11 +2284,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5396321881056159804, guid: 84960829960bf9d46a0df396d93bce0e, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 4.52
+      value: 13.42
       objectReference: {fileID: 0}
     - target: {fileID: 5396321881056159804, guid: 84960829960bf9d46a0df396d93bce0e, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 11.36
+      value: 11.03
       objectReference: {fileID: 0}
     - target: {fileID: 5396321881056159804, guid: 84960829960bf9d46a0df396d93bce0e, type: 3}
       propertyPath: m_LocalPosition.z
@@ -3028,6 +3060,9 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 121178387654246745, guid: 84960829960bf9d46a0df396d93bce0e, type: 3}
+      insertIndex: 6
+      addedObject: {fileID: 88288803}
+    - targetCorrespondingSourceObject: {fileID: 121178387654246745, guid: 84960829960bf9d46a0df396d93bce0e, type: 3}
       insertIndex: -1
       addedObject: {fileID: 88288795}
     - targetCorrespondingSourceObject: {fileID: 121178387654246745, guid: 84960829960bf9d46a0df396d93bce0e, type: 3}
@@ -3244,7 +3279,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f3aaa7308914ac14cb7fa968e287cc81, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  agentRole: 0
+  agentRole: 1
   foodLayer:
     serializedVersion: 2
     m_Bits: 1088

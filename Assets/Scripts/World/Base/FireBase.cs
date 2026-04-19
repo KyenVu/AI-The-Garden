@@ -45,7 +45,7 @@ public class FireBase : MonoBehaviour, I_Interactable, I_Storage
     // Agents will call this method when they arrive at the base
     public void SyncKnowledge(AgentBlackBoard bb)
     {
-        // 1. Clean up destroyed/eaten resources from both memories
+        // 1. Clean up destroyed/eaten resources
         knownFoods.RemoveAll(x => x == null);
         knownTrees.RemoveAll(x => x == null);
         knownWaters.RemoveAll(x => x == null);
@@ -54,29 +54,29 @@ public class FireBase : MonoBehaviour, I_Interactable, I_Storage
         bb.knownTrees.RemoveAll(x => x == null);
         bb.knownWaters.RemoveAll(x => x == null);
 
+        // --- UNIVERSAL NAME CHECK (Fixes the crash!) ---
+        string agentName = bb.mlBrain != null ? bb.mlBrain.gameObject.name :
+                          (bb.mover != null ? bb.mover.gameObject.name : "Unknown Agent");
+
         int upFood = 0, upWater = 0, upTree = 0;
         int downFood = 0, downWater = 0, downTree = 0;
 
-        // 2. AGENT UPLOADS TO BASE (Explorer -> Base)
+        // 2. UPLOAD (Explorer -> Base)
         foreach (Food f in bb.knownFoods) if (!knownFoods.Contains(f)) { knownFoods.Add(f); upFood++; }
         foreach (Tree t in bb.knownTrees) if (!knownTrees.Contains(t)) { knownTrees.Add(t); upTree++; }
         foreach (WaterSource w in bb.knownWaters) if (!knownWaters.Contains(w)) { knownWaters.Add(w); upWater++; }
 
-        // 3. BASE DOWNLOADS TO AGENT (Base -> Worker)
+        // 3. DOWNLOAD (Base -> Agent/Worker)
         foreach (Food f in knownFoods) if (!bb.knownFoods.Contains(f)) { bb.knownFoods.Add(f); downFood++; }
         foreach (Tree t in knownTrees) if (!bb.knownTrees.Contains(t)) { bb.knownTrees.Add(t); downTree++; }
         foreach (WaterSource w in knownWaters) if (!bb.knownWaters.Contains(w)) { bb.knownWaters.Add(w); downWater++; }
 
-        // DEBUG PRINTING
+        // 4. LOGGING (Using the safe name)
         if (upFood > 0 || upWater > 0 || upTree > 0)
-        {
-            Debug.Log($"<color=green>[UPLOAD]</color> {bb.mover.gameObject.name} taught Base: {upFood} Foods, {upWater} Waters, {upTree} Trees.");
-        }
+            Debug.Log($"<color=green>[UPLOAD]</color> {agentName} taught Base new resources.");
 
         if (downFood > 0 || downWater > 0 || downTree > 0)
-        {
-            Debug.Log($"<color=cyan>[DOWNLOAD]</color> {bb.mover.gameObject.name} learned from Base: {downFood} Foods, {downWater} Waters, {downTree} Trees.");
-        }
+            Debug.Log($"<color=cyan>[DOWNLOAD]</color> {agentName} learned resources from Base.");
     }
     private void Awake()
     {
