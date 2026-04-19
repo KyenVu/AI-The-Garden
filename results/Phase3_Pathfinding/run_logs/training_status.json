@@ -1,0 +1,29 @@
+{
+    "Pathfinding": {
+        "checkpoints": [
+            {
+                "steps": 14592,
+                "file_path": "results\\Phase3_Pathfinding\\Pathfinding\\Pathfinding-14592.onnx",
+                "reward": 0.6666665906086564,
+                "creation_time": 1776527258.8017292,
+                "auxillary_file_paths": [
+                    "results\\Phase3_Pathfinding\\Pathfinding\\Pathfinding-14592.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 14592,
+            "file_path": "results\\Phase3_Pathfinding\\Pathfinding.onnx",
+            "reward": 0.6666665906086564,
+            "creation_time": 1776527258.8017292,
+            "auxillary_file_paths": [
+                "results\\Phase3_Pathfinding\\Pathfinding\\Pathfinding-14592.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "1.1.0",
+        "torch_version": "2.2.2+cu121"
+    }
+}

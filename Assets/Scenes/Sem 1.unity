@@ -2604,6 +2604,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b376c711d5f476641b108e160b83f595, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  agentRole: 0
   foodLayer:
     serializedVersion: 2
     m_Bits: 1088
@@ -2616,7 +2617,13 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 512
   treeSearchRadius: 20
+  agentLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  gossipInterval: 0.5
   cookingStation: {fileID: 7590702291465490526, guid: 8cb3740cfa3f6f34e969bbba31a3283d, type: 3}
+  waterStation: {fileID: 5439671137501523929, guid: 1c06d2bc03f329a4f9ccb6463bf9f7ad, type: 3}
+  plankStation: {fileID: 6639339554601962153, guid: 30fcf1ecaf89a374aac97a56e3174bbd, type: 3}
 --- !u!114 &886439281
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4417,6 +4424,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b376c711d5f476641b108e160b83f595, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  agentRole: 0
   foodLayer:
     serializedVersion: 2
     m_Bits: 1088
@@ -4429,7 +4437,13 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 512
   treeSearchRadius: 20
+  agentLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  gossipInterval: 0.5
   cookingStation: {fileID: 7590702291465490526, guid: 8cb3740cfa3f6f34e969bbba31a3283d, type: 3}
+  waterStation: {fileID: 5439671137501523929, guid: 1c06d2bc03f329a4f9ccb6463bf9f7ad, type: 3}
+  plankStation: {fileID: 6639339554601962153, guid: 30fcf1ecaf89a374aac97a56e3174bbd, type: 3}
 --- !u!114 &1857203895
 MonoBehaviour:
   m_ObjectHideFlags: 0

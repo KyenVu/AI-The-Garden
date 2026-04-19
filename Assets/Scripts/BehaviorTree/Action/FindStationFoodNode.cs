@@ -14,36 +14,45 @@ public class FindStationFoodNode : Node
     {
         if (CookingStation.Instance != null && CookingStation.Instance.cookedFoodAvailable > 0)
         {
-            if (CookingStation.Instance.TryClaim(bb.mover.gameObject))
+            // --- UNIVERSAL SETUP ---
+            GameObject agentObj = bb.mlBrain != null ? bb.mlBrain.gameObject : bb.mover.gameObject;
+            Transform agentTransform = bb.mlBrain != null ? bb.mlBrain.transform : bb.mover.transform;
+            GridManager grid = bb.mlBrain != null ? bb.mlBrain.gridManager : bb.mover.grid;
+
+            if (CookingStation.Instance.TryClaim(agentObj))
             {
                 bb.currentTarget = CookingStation.Instance.transform;
+                bb.destinationObject = CookingStation.Instance.transform; // CRITICAL FOR ML-BRAIN
 
-                Collider2D stationCollider = CookingStation.Instance.GetComponent<Collider2D>();
-                List<TileData> stationTiles = bb.mover.grid.GetTilesUnderCollider(stationCollider);
-                List<TileData> validNeighbors = new List<TileData>();
-
-                // Get all valid neighbors around the ENTIRE perimeter of the big station
-                foreach (TileData tile in stationTiles)
+                // --- SEMESTER 1 PATHFINDING ---
+                if (bb.mover != null && grid != null)
                 {
-                    foreach (TileData neighbor in bb.mover.grid.GetNeighbors(tile, true))
+                    Collider2D stationCollider = CookingStation.Instance.GetComponent<Collider2D>();
+                    List<TileData> stationTiles = grid.GetTilesUnderCollider(stationCollider);
+                    List<TileData> validNeighbors = new List<TileData>();
+
+                    foreach (TileData tile in stationTiles)
                     {
-                        if (neighbor.Walkable && !validNeighbors.Contains(neighbor))
+                        foreach (TileData neighbor in grid.GetNeighbors(tile, true))
                         {
-                            validNeighbors.Add(neighbor);
+                            if (neighbor.Walkable && !validNeighbors.Contains(neighbor))
+                            {
+                                validNeighbors.Add(neighbor);
+                            }
                         }
                     }
+
+                    TileData destinationTile = grid.GetClosestTile(agentTransform.position, validNeighbors);
+
+                    if (destinationTile == null)
+                    {
+                        CookingStation.Instance.ReleaseClaim(agentObj);
+                        bb.ui?.SetState("Food Station is completely surrounded!");
+                        return _state = NodeState.Failure;
+                    }
+
+                    bb.mover.SetDestinationTile(destinationTile, CookingStation.Instance.transform);
                 }
-
-                TileData destinationTile = bb.mover.grid.GetClosestTile(bb.mover.transform.position, validNeighbors);
-
-                if (destinationTile == null)
-                {
-                    CookingStation.Instance.ReleaseClaim(bb.mover.gameObject);
-                    bb.ui?.SetState("Food Station is completely surrounded!");
-                    return _state = NodeState.Failure;
-                }
-
-                bb.mover.SetDestinationTile(destinationTile, CookingStation.Instance.transform);
 
                 bb.ui?.SetState("Found Food Station! Moving...");
                 return _state = NodeState.Success;

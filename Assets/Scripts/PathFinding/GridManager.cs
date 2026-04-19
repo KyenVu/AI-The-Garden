@@ -143,41 +143,48 @@ public class GridManager : MonoBehaviour
     /// <summary>
     /// Dispatches resource setup based on the TileType ID.
     /// </summary>
+    /// <summary>
+    /// Dispatches resource setup based on the TileType ID.
+    /// </summary>
     private void SetupResourceTile(GameObject tileGO, TileData td, TileType chosen)
     {
         if (chosen == null) return;
 
         if (chosen.id.Equals("Food", StringComparison.OrdinalIgnoreCase))
         {
-            // Use ?? to add component if missing
             Food food = tileGO.GetComponent<Food>() ?? tileGO.AddComponent<Food>();
             food.data = defaultFoodData;
-            // Food does not use the tile size multiplier for its collider size
-            SetupResourceCollider(tileGO, td, 1f);
+            // Food is a trigger (agents walk through it to eat it)
+            SetupResourceCollider(tileGO, td, 1f, isTrigger: true);
         }
         else if (chosen.id.Equals("Water", StringComparison.OrdinalIgnoreCase))
         {
             WaterSource water = tileGO.GetComponent<WaterSource>() ?? tileGO.AddComponent<WaterSource>();
             water.data = defaultWaterData;
-            // Water uses the tile size multiplier
-            SetupResourceCollider(tileGO, td, chosen.size);
+            // Water is a trigger
+            SetupResourceCollider(tileGO, td, chosen.size, isTrigger: true);
         }
         else if (chosen.id.Equals("Tree", StringComparison.OrdinalIgnoreCase))
         {
             Tree tree = tileGO.GetComponent<Tree>() ?? tileGO.AddComponent<Tree>();
             tree.data = defaultTreeData;
-            // Tree uses the tile size multiplier
-            SetupResourceCollider(tileGO, td, chosen.size);
+            // Depending on your game, trees might be solid. I've set it to solid (false) here!
+            SetupResourceCollider(tileGO, td, chosen.size, isTrigger: true);
+        }
+        else if (chosen.id.Equals("Obstacle", StringComparison.OrdinalIgnoreCase))
+        {
+            // OBSTACLES ARE SOLID: isTrigger is set to FALSE so OnCollisionEnter2D fires!
+            SetupResourceCollider(tileGO, td, chosen.size, isTrigger: true);
+
+            tileGO.layer = LayerMask.NameToLayer("Obstacle");
         }
     }
 
     /// <summary>
     /// Creates and configures the BoxCollider2D for resource tiles.
     /// </summary>
-    private void SetupResourceCollider(GameObject tileGO, TileData td, float sizeMultiplier)
+    private void SetupResourceCollider(GameObject tileGO, TileData td, float sizeMultiplier, bool isTrigger)
     {
-        // FIX: Replaced null-coalescing assignment with explicit GetComponent/AddComponent check
-        // This ensures the component is reliably present before we try to access its properties.
         BoxCollider2D col = tileGO.GetComponent<BoxCollider2D>();
         if (col == null)
         {
@@ -186,11 +193,11 @@ public class GridManager : MonoBehaviour
 
         if (col != null)
         {
-            col.isTrigger = true;
+            // Set the trigger status based on what was passed in!
+            col.isTrigger = isTrigger;
 
             if (td.spriteRenderer != null && td.spriteRenderer.sprite != null)
             {
-                // The size logic is now centralized and uses the sizeMultiplier parameter
                 col.size = td.spriteRenderer.sprite.bounds.size * sizeMultiplier;
             }
         }
@@ -459,9 +466,9 @@ public class GridManager : MonoBehaviour
         // Initialize with new tile type data
         newTile.Init(x, y, newType);
 
+        SetupResourceTile(newTileGO, newTile, newType);
         // --- NEW: Restore the fog state from the old tile ---
         newTile.SetRevealed(wasRevealed);
-
         // Store it in the grid array
         tiles[x, y] = newTile;
 

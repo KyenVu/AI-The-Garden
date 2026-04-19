@@ -12,9 +12,14 @@ public class FindWaterNode : Node
 
     public override NodeState Evaluate()
     {
+        // --- UNIVERSAL SETUP ---
+        Transform agentTransform = bb.mlBrain != null ? bb.mlBrain.transform : bb.mover.transform;
+        GridManager grid = bb.mlBrain != null ? bb.mlBrain.gridManager : bb.mover.grid;
+        GameObject agentObj = agentTransform.gameObject;
+
         List<WaterSource> candidateWaters = new List<WaterSource>();
 
-        Collider2D[] waters = Physics2D.OverlapCircleAll(bb.mover.transform.position, bb.waterSearchRadius, bb.waterLayer);
+        Collider2D[] waters = Physics2D.OverlapCircleAll(agentTransform.position, bb.waterSearchRadius, bb.waterLayer);
         foreach (Collider2D col in waters)
         {
             WaterSource w = col.GetComponent<WaterSource>();
@@ -35,19 +40,19 @@ public class FindWaterNode : Node
 
         WaterSource closestAvailableWater = null;
         float bestDist = Mathf.Infinity;
-        GridManager grid = bb.mover.grid;
 
         foreach (WaterSource waterSource in candidateWaters)
         {
             if (grid != null)
             {
                 TileData tile = grid.GetTileAtWorldPosition(waterSource.transform.position);
-                if (tile == null || !tile.isRevealed) continue;
+                // --- FOG REMOVED HERE ---
+                if (tile == null) continue;
             }
 
-            if (waterSource.IsClaimed == false || waterSource.claimedByAgent == bb.mover.gameObject)
+            if (waterSource.IsClaimed == false || waterSource.claimedByAgent == agentObj)
             {
-                float dist = Vector2.Distance(bb.mover.transform.position, waterSource.transform.position);
+                float dist = Vector2.Distance(agentTransform.position, waterSource.transform.position);
                 if (dist < bestDist)
                 {
                     bestDist = dist;
@@ -62,40 +67,43 @@ public class FindWaterNode : Node
             return _state = NodeState.Failure;
         }
 
-        if (closestAvailableWater.TryClaim(bb.mover.gameObject))
+        if (closestAvailableWater.TryClaim(agentObj))
         {
-            List<TileData> tilesUnderWater = bb.mover.grid.GetTilesUnderCollider(closestAvailableWater.GetComponent<Collider2D>());
-            TileData destinationTile = null;
-
-            if (tilesUnderWater.Count == 0)
-                destinationTile = bb.mover.grid.GetTileAtWorldPosition(closestAvailableWater.transform.position);
-            else
-                destinationTile = bb.mover.grid.GetClosestTile(bb.mover.transform.position, tilesUnderWater);
-
-            // Path to a walkable neighbor if the exact tile is blocked
-            if (destinationTile != null && !destinationTile.Walkable)
-            {
-                List<TileData> neighbors = grid.GetNeighbors(destinationTile, true);
-                if (neighbors.Count > 0) destinationTile = grid.GetClosestTile(bb.mover.transform.position, neighbors);
-            }
-
-            if (destinationTile == null)
-            {
-                closestAvailableWater.ReleaseClaim(bb.mover.gameObject);
-                bb.ui?.SetState("Water Found, but no reachable tile");
-                return _state = NodeState.Failure;
-            }
-
+            bb.destinationObject = closestAvailableWater.transform;
             bb.currentTarget = closestAvailableWater.transform;
-            bb.mover.SetDestinationTile(destinationTile, closestAvailableWater.transform);
 
-            // PATHFINDING FAIL-SAFE
-            if (bb.mover.HasReachedDestination() && Vector2.Distance(bb.mover.transform.position, closestAvailableWater.transform.position) > 2.0f)
+            if (bb.mover != null)
             {
-                closestAvailableWater.ReleaseClaim(bb.mover.gameObject);
-                bb.mover.ClearTarget();
-                bb.ui?.SetState("Target Water is unreachable!");
-                return _state = NodeState.Failure;
+                List<TileData> tilesUnderWater = grid.GetTilesUnderCollider(closestAvailableWater.GetComponent<Collider2D>());
+                TileData destinationTile = null;
+
+                if (tilesUnderWater.Count == 0)
+                    destinationTile = grid.GetTileAtWorldPosition(closestAvailableWater.transform.position);
+                else
+                    destinationTile = grid.GetClosestTile(agentTransform.position, tilesUnderWater);
+
+                if (destinationTile != null && !destinationTile.Walkable)
+                {
+                    List<TileData> neighbors = grid.GetNeighbors(destinationTile, true);
+                    if (neighbors.Count > 0) destinationTile = grid.GetClosestTile(agentTransform.position, neighbors);
+                }
+
+                if (destinationTile == null)
+                {
+                    closestAvailableWater.ReleaseClaim(agentObj);
+                    bb.ui?.SetState("Water Found, but no reachable tile");
+                    return _state = NodeState.Failure;
+                }
+
+                bb.mover.SetDestinationTile(destinationTile, closestAvailableWater.transform);
+
+                if (bb.mover.HasReachedDestination() && Vector2.Distance(agentTransform.position, closestAvailableWater.transform.position) > 2.0f)
+                {
+                    closestAvailableWater.ReleaseClaim(agentObj);
+                    bb.mover.ClearTarget();
+                    bb.ui?.SetState("Target Water is unreachable!");
+                    return _state = NodeState.Failure;
+                }
             }
 
             bb.ui?.SetState("Water Found — Moving");

@@ -66,22 +66,22 @@ public class AgentAI : MonoBehaviour
             new FindFoodNode(bb)
         });
         var findConsumableWaterSelector = new Selector(new List<Node> {
-            new FindStationWaterNode(bb), 
-            new FindWaterNode(bb)   
+            new FindStationWaterNode(bb),
+            new FindWaterNode(bb)
         });
 
         var hungerSequence = new MemorySequence(bb, "Hunger Sequence", new List<Node> {
             new IsHungryNode(bb, 0.25f),
             findConsumableFoodSelector,
             new MoveToDestinationNode(bb),
-            new EatFoodNode(bb.stats, bb.mover, bb.ui)
+            new EatFoodNode(bb)
         });
 
         var thirstSequence = new MemorySequence(bb, "Thirst Sequence", new List<Node> {
             new IsThirstyNode(bb, 0.25f),
-            findConsumableWaterSelector,  
+            findConsumableWaterSelector,
             new MoveToDestinationNode(bb),
-            new DrinkWaterNode(bb.stats, bb.mover, bb.ui)
+            new DrinkWaterNode(bb)
         });
 
         var nightRestSequence = new MemorySequence(bb, "Night Rest Sequence", new List<Node> {
@@ -95,7 +95,7 @@ public class AgentAI : MonoBehaviour
         // WORKER-SPECIFIC NODES
         // ==========================================
         var chopWoodSequence = new MemorySequence(bb, "ChopWood Sequence", new List<Node> {
-            new IsMissingWoodNode(bb.baseRef),
+            new IsMissingWoodNode(bb),
             new IsInventoryNotFullNode(bb, ResourceType.Wood),
             new FindTreeNode(bb),
             new MoveToDestinationNode(bb),
@@ -170,7 +170,7 @@ public class AgentAI : MonoBehaviour
             new PickExplorationTargetNode(bb),
             new MoveAndScoutNode(bb)
         });
-      
+
         var returnKnowledgeSequence = new MemorySequence(bb, "Return Knowledge Sequence", new List<Node> {
             new IsReadyToReportNode(bb),
             new FindBaseNode(bb),
@@ -183,20 +183,20 @@ public class AgentAI : MonoBehaviour
         // ==========================================
         if (agentRole == AgentRole.Worker)
         {
-            root = new Selector( new List<Node> {
+            root = new Selector(new List<Node> {
                 nightRestSequence,
                 thirstSequence,
                 hungerSequence,
-               // buildFoodStationSequence,
+                buildFoodStationSequence,
                 buildPlankStationSequence,
-                //buildWaterStationSequence,
+                buildWaterStationSequence,
                 upgradeStationSequence,
                 agentLifestyle
             });
         }
         else if (agentRole == AgentRole.Explorer)
         {
-            root = new Selector( new List<Node> {
+            root = new Selector(new List<Node> {
                 nightRestSequence,
                 thirstSequence,
                 hungerSequence,

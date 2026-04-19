@@ -14,36 +14,46 @@ public class FindStationWaterNode : Node
     {
         if (WaterStation.Instance != null && WaterStation.Instance.waterAvailable > 0)
         {
-            if (WaterStation.Instance.TryClaim(bb.mover.gameObject))
+            // --- UNIVERSAL SETUP ---
+            GameObject agentObj = bb.mlBrain != null ? bb.mlBrain.gameObject : bb.mover.gameObject;
+            Transform agentTransform = bb.mlBrain != null ? bb.mlBrain.transform : bb.mover.transform;
+            GridManager grid = bb.mlBrain != null ? bb.mlBrain.gridManager : bb.mover.grid;
+
+            if (WaterStation.Instance.TryClaim(agentObj))
             {
                 bb.currentTarget = WaterStation.Instance.transform;
+                bb.destinationObject = WaterStation.Instance.transform; // CRITICAL FOR ML-BRAIN
 
-                Collider2D stationCollider = WaterStation.Instance.GetComponent<Collider2D>();
-                List<TileData> stationTiles = bb.mover.grid.GetTilesUnderCollider(stationCollider);
-                List<TileData> validNeighbors = new List<TileData>();
-
-                // Perimeter search
-                foreach (TileData tile in stationTiles)
+                // --- SEMESTER 1 PATHFINDING ---
+                if (bb.mover != null && grid != null)
                 {
-                    foreach (TileData neighbor in bb.mover.grid.GetNeighbors(tile, true))
+                    Collider2D stationCollider = WaterStation.Instance.GetComponent<Collider2D>();
+                    List<TileData> stationTiles = grid.GetTilesUnderCollider(stationCollider);
+                    List<TileData> validNeighbors = new List<TileData>();
+
+                    // Perimeter search
+                    foreach (TileData tile in stationTiles)
                     {
-                        if (neighbor.Walkable && !validNeighbors.Contains(neighbor))
+                        foreach (TileData neighbor in grid.GetNeighbors(tile, true))
                         {
-                            validNeighbors.Add(neighbor);
+                            if (neighbor.Walkable && !validNeighbors.Contains(neighbor))
+                            {
+                                validNeighbors.Add(neighbor);
+                            }
                         }
                     }
+
+                    TileData destinationTile = grid.GetClosestTile(agentTransform.position, validNeighbors);
+
+                    if (destinationTile == null)
+                    {
+                        WaterStation.Instance.ReleaseClaim(agentObj);
+                        bb.ui?.SetState("Water Station is completely surrounded!");
+                        return _state = NodeState.Failure;
+                    }
+
+                    bb.mover.SetDestinationTile(destinationTile, WaterStation.Instance.transform);
                 }
-
-                TileData destinationTile = bb.mover.grid.GetClosestTile(bb.mover.transform.position, validNeighbors);
-
-                if (destinationTile == null)
-                {
-                    WaterStation.Instance.ReleaseClaim(bb.mover.gameObject);
-                    bb.ui?.SetState("Water Station is completely surrounded!");
-                    return _state = NodeState.Failure;
-                }
-
-                bb.mover.SetDestinationTile(destinationTile, WaterStation.Instance.transform);
 
                 bb.ui?.SetState("Found Water Station! Moving...");
                 return _state = NodeState.Success;

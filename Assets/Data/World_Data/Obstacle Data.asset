@@ -20,5 +20,5 @@ MonoBehaviour:
   sortingLayer: Default
   orderInLayer: 0
   physicsLayer: Default
-  addCollider: 0
-  isTrigger: 1
+  addCollider: 1
+  isTrigger: 0

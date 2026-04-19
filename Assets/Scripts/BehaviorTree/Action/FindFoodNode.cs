@@ -12,18 +12,21 @@ public class FindFoodNode : Node
 
     public override NodeState Evaluate()
     {
+        // --- UNIVERSAL SETUP ---
+        Transform agentTransform = bb.mlBrain != null ? bb.mlBrain.transform : bb.mover.transform;
+        GridManager grid = bb.mlBrain != null ? bb.mlBrain.gridManager : bb.mover.grid;
+        GameObject agentObj = agentTransform.gameObject;
+
         List<Food> candidateFoods = new List<Food>();
 
-        // 1. Check Local Radius
-        Collider2D[] detectedFoods = Physics2D.OverlapCircleAll(bb.mover.transform.position, bb.foodSearchRadius, bb.foodLayer);
+        Collider2D[] detectedFoods = Physics2D.OverlapCircleAll(agentTransform.position, bb.foodSearchRadius, bb.foodLayer);
         foreach (Collider2D col in detectedFoods)
         {
             Food f = col.GetComponent<Food>();
             if (f != null && !candidateFoods.Contains(f)) candidateFoods.Add(f);
         }
 
-        // 2. Check Global Base Knowledge
-        bb.knownFoods.RemoveAll(f => f == null); // Clean up eaten foods
+        bb.knownFoods.RemoveAll(f => f == null);
         foreach (Food f in bb.knownFoods)
         {
             if (f != null && !candidateFoods.Contains(f)) candidateFoods.Add(f);
@@ -36,19 +39,19 @@ public class FindFoodNode : Node
 
         Transform closestFood = null;
         float minDistance = Mathf.Infinity;
-        GridManager grid = bb.mover.grid;
 
         foreach (Food foodComponent in candidateFoods)
         {
             if (grid != null)
             {
                 TileData tile = grid.GetTileAtWorldPosition(foodComponent.transform.position);
-                if (tile == null || !tile.isRevealed) continue;
+                // --- FOG REMOVED HERE ---
+                if (tile == null) continue;
             }
 
-            if (foodComponent.IsClaimed == false || foodComponent.claimedByAgent == bb.mover.gameObject)
+            if (foodComponent.IsClaimed == false || foodComponent.claimedByAgent == agentObj)
             {
-                float dist = Vector2.Distance(bb.mover.transform.position, foodComponent.transform.position);
+                float dist = Vector2.Distance(agentTransform.position, foodComponent.transform.position);
                 if (dist < minDistance)
                 {
                     minDistance = dist;
@@ -60,28 +63,31 @@ public class FindFoodNode : Node
         if (closestFood != null)
         {
             Food foodComponent = closestFood.GetComponent<Food>();
-            if (foodComponent != null && foodComponent.TryClaim(bb.mover.gameObject))
+            if (foodComponent != null && foodComponent.TryClaim(agentObj))
             {
-                TileData targetTile = grid.GetTileAtWorldPosition(closestFood.position);
-                TileData destinationTile = targetTile;
-
-                // Path to a walkable neighbor if the exact tile is blocked/unwalkable
-                if (targetTile != null && !targetTile.Walkable)
-                {
-                    List<TileData> neighbors = grid.GetNeighbors(targetTile, true);
-                    if (neighbors.Count > 0) destinationTile = grid.GetClosestTile(bb.mover.transform.position, neighbors);
-                }
-
+                bb.destinationObject = closestFood;
                 bb.currentTarget = closestFood;
-                bb.mover.SetDestinationTile(destinationTile, closestFood);
 
-                // PATHFINDING FAIL-SAFE: Check if A* failed to build a route
-                if (bb.mover.HasReachedDestination() && Vector2.Distance(bb.mover.transform.position, closestFood.position) > 2.0f)
+                if (bb.mover != null)
                 {
-                    foodComponent.ReleaseClaim(bb.mover.gameObject);
-                    bb.mover.ClearTarget();
-                    bb.ui?.SetState("Target Food is unreachable!");
-                    return _state = NodeState.Failure;
+                    TileData targetTile = grid.GetTileAtWorldPosition(closestFood.position);
+                    TileData destinationTile = targetTile;
+
+                    if (targetTile != null && !targetTile.Walkable)
+                    {
+                        List<TileData> neighbors = grid.GetNeighbors(targetTile, true);
+                        if (neighbors.Count > 0) destinationTile = grid.GetClosestTile(agentTransform.position, neighbors);
+                    }
+
+                    bb.mover.SetDestinationTile(destinationTile, closestFood);
+
+                    if (bb.mover.HasReachedDestination() && Vector2.Distance(agentTransform.position, closestFood.position) > 2.0f)
+                    {
+                        foodComponent.ReleaseClaim(agentObj);
+                        bb.mover.ClearTarget();
+                        bb.ui?.SetState("Target Food is unreachable!");
+                        return _state = NodeState.Failure;
+                    }
                 }
 
                 bb.ui?.SetState($"Moving to {closestFood.name}");

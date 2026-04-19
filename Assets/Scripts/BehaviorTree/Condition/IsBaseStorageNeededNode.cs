@@ -3,26 +3,29 @@ using UnityEngine;
 public class IsBaseStorageNeededNode : Node
 {
     private AgentBlackBoard bb;
-    private FireBase fireBase;
     private ResourceType resourceType;
 
     // We pass the AgentBlackBoard to allow setting the UI state
     public IsBaseStorageNeededNode(AgentBlackBoard blackBoard, ResourceType type)
     {
         this.bb = blackBoard;
-        this.fireBase = bb.baseRef; // Get the FireBase reference from the BlackBoard
         this.resourceType = type;
+        // Removed the stale 'fireBase' caching here!
     }
 
     public override NodeState Evaluate()
     {
-        if (fireBase == null)
+        if (bb.baseRef == null)
         {
-            bb.ui?.SetState("Base Missing");
-            return _state = NodeState.Failure;
+            // Try to find it again!
+            bb.baseRef = GameObject.FindAnyObjectByType<FireBase>();
+
+            // If it's STILL null, safely fail so it doesn't crash
+            if (bb.baseRef == null) return NodeState.Failure;
         }
 
-        bool needed = fireBase.HasSpaceFor(resourceType);
+        // --- THE FIX: Use bb.baseRef directly so it's never a dead reference! ---
+        bool needed = bb.baseRef.HasSpaceFor(resourceType);
 
         if (needed)
         {

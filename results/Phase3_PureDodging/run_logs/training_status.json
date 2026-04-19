@@ -1,0 +1,29 @@
+{
+    "PureDodging": {
+        "checkpoints": [
+            {
+                "steps": 219600,
+                "file_path": "results\\Phase3_PureDodging\\PureDodging\\PureDodging-219600.onnx",
+                "reward": 6.021886453032494,
+                "creation_time": 1776525979.322255,
+                "auxillary_file_paths": [
+                    "results\\Phase3_PureDodging\\PureDodging\\PureDodging-219600.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 219600,
+            "file_path": "results\\Phase3_PureDodging\\PureDodging.onnx",
+            "reward": 6.021886453032494,
+            "creation_time": 1776525979.322255,
+            "auxillary_file_paths": [
+                "results\\Phase3_PureDodging\\PureDodging\\PureDodging-219600.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "1.1.0",
+        "torch_version": "2.2.2+cu121"
+    }
+}

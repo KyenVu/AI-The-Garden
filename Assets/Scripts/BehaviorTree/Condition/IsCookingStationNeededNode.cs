@@ -1,10 +1,12 @@
-// File: Scripts/BehaviorTree/Condition/IsCookingStationNeededNode.cs (New File)
 using UnityEngine;
 
 public class IsCookingStationNeededNode : Node
 {
     private AgentBlackBoard bb;
+
+    // We define BOTH costs here now to match the Build node!
     private const int LOW_FOOD_THRESHOLD = 10;
+    private const int BUILD_COST_WOOD = 15;
 
     public IsCookingStationNeededNode(AgentBlackBoard blackBoard)
     {
@@ -13,21 +15,28 @@ public class IsCookingStationNeededNode : Node
 
     public override NodeState Evaluate()
     {
-        FireBase fb = bb.baseRef;
-        if (fb == null) return _state = NodeState.Failure;
-
-        // Check 1: Is Food supply enough to warrant a station? (>= 10)
-        bool foodIsEnough = fb.GetAmount(ResourceType.Food) >= LOW_FOOD_THRESHOLD;
-
-        // Check 2: Does a Cooking Station already exist?
-        bool stationExists = CookingStation.Instance != null;
-
-        if (foodIsEnough && !stationExists)
+        // --- Frame 1 Failsafe ---
+        if (bb.baseRef == null)
         {
-            bb.ui?.SetState("CRITICAL FOOD: Initiating Cooking Station Build.");
-            return _state = NodeState.Success;
+            bb.baseRef = GameObject.FindAnyObjectByType<FireBase>();
+            if (bb.baseRef == null) return NodeState.Failure;
         }
 
-        return _state = NodeState.Failure;
+        // Check 1: Does a Cooking Station already exist?
+        if (CookingStation.Instance != null)
+        {
+            return NodeState.Failure;
+        }
+
+        // Check 2: Do we actually have enough Food AND Wood to pay for it?
+        if (bb.baseRef.GetAmount(ResourceType.Food) < LOW_FOOD_THRESHOLD ||
+            bb.baseRef.GetAmount(ResourceType.Wood) < BUILD_COST_WOOD)
+        {
+            return NodeState.Failure;
+        }
+
+        // If we have both, we can officially start building!
+        bb.ui?.SetState("CRITICAL FOOD: Initiating Cooking Station Build.");
+        return NodeState.Success;
     }
 }

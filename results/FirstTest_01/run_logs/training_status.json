@@ -1,0 +1,47 @@
+{
+    "AgentBrain_ML": {
+        "checkpoints": [
+            {
+                "steps": 455376,
+                "file_path": "results\\FirstTest_01\\AgentBrain_ML\\AgentBrain_ML-455376.onnx",
+                "reward": 56.93800141201133,
+                "creation_time": 1776532298.5202162,
+                "auxillary_file_paths": [
+                    "results\\FirstTest_01\\AgentBrain_ML\\AgentBrain_ML-455376.pt"
+                ]
+            },
+            {
+                "steps": 465696,
+                "file_path": "results\\FirstTest_01\\AgentBrain_ML\\AgentBrain_ML-465696.onnx",
+                "reward": null,
+                "creation_time": 1776539861.031421,
+                "auxillary_file_paths": [
+                    "results\\FirstTest_01\\AgentBrain_ML\\AgentBrain_ML-465696.pt"
+                ]
+            },
+            {
+                "steps": 470064,
+                "file_path": "results\\FirstTest_01\\AgentBrain_ML\\AgentBrain_ML-470064.onnx",
+                "reward": -2.4253335760699377,
+                "creation_time": 1776539993.9276373,
+                "auxillary_file_paths": [
+                    "results\\FirstTest_01\\AgentBrain_ML\\AgentBrain_ML-470064.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 470064,
+            "file_path": "results\\FirstTest_01\\AgentBrain_ML.onnx",
+            "reward": -2.4253335760699377,
+            "creation_time": 1776539993.9276373,
+            "auxillary_file_paths": [
+                "results\\FirstTest_01\\AgentBrain_ML\\AgentBrain_ML-470064.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "1.1.0",
+        "torch_version": "2.2.2+cu121"
+    }
+}

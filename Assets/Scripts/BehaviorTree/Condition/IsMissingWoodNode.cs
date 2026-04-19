@@ -1,25 +1,28 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class IsMissingWoodNode : Node
 {
-    private FireBase fireBase;
-    public IsMissingWoodNode(FireBase fireBase)
+    private AgentBlackBoard bb;
+
+    public IsMissingWoodNode(AgentBlackBoard blackboard)
     {
-        this.fireBase = fireBase;
+        this.bb = blackboard;
     }
 
     public override NodeState Evaluate()
     {
-        if (fireBase == null)
+        // 1. SAFETY CHECK: Find the base if it was missed on Frame 1
+        if (bb.baseRef == null)
         {
-            // If no base exists, treat as "missing wood" or error
-            return _state = NodeState.Failure;
+            bb.baseRef = GameObject.FindAnyObjectByType<FireBase>();
+
+            // If it's STILL null, safely fail
+            if (bb.baseRef == null) return _state = NodeState.Failure;
         }
-        return _state = fireBase.HasSpaceFor(ResourceType.Wood)
+
+        // 2. Check if the base actually needs wood
+        return _state = bb.baseRef.HasSpaceFor(ResourceType.Wood)
             ? NodeState.Success
             : NodeState.Failure;
     }
-
 }

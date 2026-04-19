@@ -1,0 +1,65 @@
+{
+    "My Behavior": {
+        "checkpoints": [
+            {
+                "steps": 601900,
+                "file_path": "results\\Phase2_Survival\\My Behavior\\My Behavior-601900.onnx",
+                "reward": 143.88888512717352,
+                "creation_time": 1775974224.3691838,
+                "auxillary_file_paths": [
+                    "results\\Phase2_Survival\\My Behavior\\My Behavior-601900.pt"
+                ]
+            },
+            {
+                "steps": 676660,
+                "file_path": "results\\Phase2_Survival\\My Behavior\\My Behavior-676660.onnx",
+                "reward": 185.33333158493042,
+                "creation_time": 1775974732.3305588,
+                "auxillary_file_paths": [
+                    "results\\Phase2_Survival\\My Behavior\\My Behavior-676660.pt"
+                ]
+            },
+            {
+                "steps": 759388,
+                "file_path": "results\\Phase2_Survival\\My Behavior\\My Behavior-759388.onnx",
+                "reward": 280.4666732708613,
+                "creation_time": 1775975176.3943672,
+                "auxillary_file_paths": [
+                    "results\\Phase2_Survival\\My Behavior\\My Behavior-759388.pt"
+                ]
+            },
+            {
+                "steps": 999937,
+                "file_path": "results\\Phase2_Survival\\My Behavior\\My Behavior-999937.onnx",
+                "reward": 146.66666253407797,
+                "creation_time": 1775976255.1577303,
+                "auxillary_file_paths": [
+                    "results\\Phase2_Survival\\My Behavior\\My Behavior-999937.pt"
+                ]
+            },
+            {
+                "steps": 1000129,
+                "file_path": "results\\Phase2_Survival\\My Behavior\\My Behavior-1000129.onnx",
+                "reward": 146.66666253407797,
+                "creation_time": 1775976255.203734,
+                "auxillary_file_paths": [
+                    "results\\Phase2_Survival\\My Behavior\\My Behavior-1000129.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 1000129,
+            "file_path": "results\\Phase2_Survival\\My Behavior.onnx",
+            "reward": 146.66666253407797,
+            "creation_time": 1775976255.203734,
+            "auxillary_file_paths": [
+                "results\\Phase2_Survival\\My Behavior\\My Behavior-1000129.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "1.1.0",
+        "torch_version": "2.2.2+cu121"
+    }
+}

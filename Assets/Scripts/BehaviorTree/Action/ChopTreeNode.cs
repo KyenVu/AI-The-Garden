@@ -1,5 +1,3 @@
-// File: Scripts/BehaviorTree/Action/ChopTreeNode.cs (modified)
-
 using UnityEngine;
 
 public class ChopTreeNode : Node
@@ -17,36 +15,35 @@ public class ChopTreeNode : Node
     {
         Tree tree = bb.currentTarget?.GetComponent<Tree>();
 
+        // --- UNIVERSAL SETUP ---
+        GameObject agentObj = bb.mlBrain != null ? bb.mlBrain.gameObject : bb.mover.gameObject;
+        bool isMoving = bb.mlBrain != null ? false : (bb.mover != null && !bb.mover.HasReachedDestination());
+
         // FAIL if target is invalid, is not a tree, or the claim is lost/stolen
-        if (tree == null || !tree.IsClaimed || tree.claimedByAgent != bb.mover.gameObject)
+        if (tree == null || !tree.IsClaimed || tree.claimedByAgent != agentObj)
         {
             bb.ui?.SetState("Lost tree target/claim");
-            bb.mover.ClearTarget();
+            ClearAgentTarget();
             bb.currentTarget = null;
             return _state = NodeState.Failure;
         }
 
-
         // Not at tree yet
-        if (!bb.mover.HasReachedDestination())
+        if (isMoving)
             return _state = NodeState.Running;
 
-        //  Inventory full stop chopping
+        // Inventory full stop chopping
         if (bb.inventory.IsFull(ResourceType.Wood))
         {
-
             bb.ui?.SetState("Inventory full");
-
-            tree.ReleaseClaim(bb.mover.gameObject); // RELEASE CLAIM
-
-            bb.mover.ClearTarget();
+            tree.ReleaseClaim(agentObj); // RELEASE CLAIM
+            ClearAgentTarget();
             bb.currentTarget = null;
             timer = 0;
             return _state = NodeState.Success;
         }
 
         // Chop animation / delay
-
         bb.ui?.SetState("Chopping...");
 
         timer += Time.deltaTime;
@@ -62,15 +59,11 @@ public class ChopTreeNode : Node
         // Add to inventory (may accept less)
         int accepted = bb.inventory.AddResource(ResourceType.Wood, harvestAmount);
 
-
         // If not all wood was accepted inventory full
         if (accepted < harvestAmount)
         {
-
-
-            tree.ReleaseClaim(bb.mover.gameObject); // RELEASE CLAIM
-
-            bb.mover.ClearTarget();
+            tree.ReleaseClaim(agentObj); // RELEASE CLAIM
+            ClearAgentTarget();
             bb.currentTarget = null;
             return _state = NodeState.Success;
         }
@@ -82,10 +75,15 @@ public class ChopTreeNode : Node
         }
 
         // Tree empty OR inventory full finished chopping
-        tree.ReleaseClaim(bb.mover.gameObject); // RELEASE CLAIM
-
+        tree.ReleaseClaim(agentObj); // RELEASE CLAIM
         bb.currentTarget = null;
-        bb.mover.ClearTarget();
+        ClearAgentTarget();
         return _state = NodeState.Success;
+    }
+
+    private void ClearAgentTarget()
+    {
+        if (bb.mover != null) bb.mover.ClearTarget();
+        if (bb.mlBrain != null) bb.mlBrain.ClearTarget();
     }
 }

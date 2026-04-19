@@ -1,71 +1,58 @@
-// File: Scripts/BehaviorTree/Action/GatherFoodNode.cs (New File)
-
 using UnityEngine;
 
 public class GatherFoodNode : Node
 {
     private AgentBlackBoard bb;
-    private float gatherTime = 2f; // Time delay for gathering
+    private float gatherTime = 2f;
     private float timer = 0f;
 
-    public GatherFoodNode(AgentBlackBoard bb)
-    {
-        this.bb = bb;
-    }
+    public GatherFoodNode(AgentBlackBoard bb) { this.bb = bb; }
 
     public override NodeState Evaluate()
     {
         Food food = bb.currentTarget?.GetComponent<Food>();
 
-        // 1. Check if we are still moving, or if the target is invalid
-        if (food == null || !bb.mover.HasReachedDestination())
-        {
-            return _state = NodeState.Running;
-        }
+        // --- UNIVERSAL ARRIVAL CHECK ---
+        bool isMoving = bb.mlBrain != null ? false : (bb.mover != null && !bb.mover.HasReachedDestination());
 
-        // 2. Pre-Check: Stop if inventory is full (Should be caught by IsInventoryNotFullNode, but serves as a mid-task fail-safe)
+        if (food == null || isMoving) return _state = NodeState.Running;
+
         if (bb.inventory.IsFull(ResourceType.Food))
         {
             bb.ui?.SetState("Food Inventory Full (Switch to Deposit)");
-            bb.mover.ClearTarget();
+            ClearAgentTarget();
             bb.currentTarget = null;
             timer = 0;
-            return _state = NodeState.Success; // Success means move to the next step: deposit
+            return _state = NodeState.Success;
         }
 
-        // 3. Action: Simulate gathering delay
         bb.ui?.SetState("Gathering Food...");
         timer += Time.deltaTime;
 
-        if (timer < gatherTime)
-            return _state = NodeState.Running; // Still gathering
+        if (timer < gatherTime) return _state = NodeState.Running;
 
-        // 4. Gathering Completed: Execute Harvest
         timer = 0f;
-
-        // Use the Food's nutrition value as the amount to gather (e.g., 30 units)
-        int amountToGather = 5; //bb.stats.foodHarvestRate;
-
-        // Add resource to the Agent's Inventory
+        int amountToGather = 5;
         int accepted = bb.inventory.AddResource(ResourceType.Food, amountToGather);
 
         if (accepted > 0)
         {
-            // Remove the resource from the world (re-using the existing OnEaten logic)
-            food.OnEaten(); // Destroys the Food GameObject and replaces the tile
-
+            food.OnEaten();
             bb.ui?.SetState($"Gathered {accepted} Food!");
-
-            // Success: clear target and let the Sequence proceed to FindBaseNode
-            bb.mover.ClearTarget();
+            ClearAgentTarget();
             bb.currentTarget = null;
             return _state = NodeState.Success;
         }
 
-        // If accepted is 0, the node fails to proceed to deposit
         bb.ui?.SetState("Gather failed (Inventory full)");
-        bb.mover.ClearTarget();
+        ClearAgentTarget();
         bb.currentTarget = null;
         return _state = NodeState.Failure;
+    }
+
+    private void ClearAgentTarget()
+    {
+        if (bb.mover != null) bb.mover.ClearTarget();
+        if (bb.mlBrain != null) bb.mlBrain.ClearTarget();
     }
 }

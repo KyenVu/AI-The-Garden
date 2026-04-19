@@ -15,6 +15,13 @@ public class IsWaterStationNeededNode : Node
 
     public override NodeState Evaluate()
     {
+        // --- THE FIX: Frame 1 Base Failsafe ---
+        if (bb.baseRef == null)
+        {
+            bb.baseRef = GameObject.FindAnyObjectByType<FireBase>();
+            if (bb.baseRef == null) return NodeState.Failure;
+        }
+
         // If the station is already built, we don't need to build it again
         if (WaterStation.Instance != null)
         {

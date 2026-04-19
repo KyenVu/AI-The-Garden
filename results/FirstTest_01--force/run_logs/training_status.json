@@ -1,0 +1,29 @@
+{
+    "AgentBrain_ML": {
+        "checkpoints": [
+            {
+                "steps": 2140,
+                "file_path": "results\\FirstTest_01--force\\AgentBrain_ML\\AgentBrain_ML-2140.onnx",
+                "reward": -0.09911124097804229,
+                "creation_time": 1776528367.8381772,
+                "auxillary_file_paths": [
+                    "results\\FirstTest_01--force\\AgentBrain_ML\\AgentBrain_ML-2140.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 2140,
+            "file_path": "results\\FirstTest_01--force\\AgentBrain_ML.onnx",
+            "reward": -0.09911124097804229,
+            "creation_time": 1776528367.8381772,
+            "auxillary_file_paths": [
+                "results\\FirstTest_01--force\\AgentBrain_ML\\AgentBrain_ML-2140.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "1.1.0",
+        "torch_version": "2.2.2+cu121"
+    }
+}

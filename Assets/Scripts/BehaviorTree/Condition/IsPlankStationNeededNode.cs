@@ -11,13 +11,27 @@ public class IsPlankStationNeededNode : Node
 
     public override NodeState Evaluate()
     {
-        if (PlankStation.Instance != null) return _state = NodeState.Failure; // Already built!
-
-        if (bb.baseRef.GetAmount(ResourceType.Wood) < BUILD_COST_WOOD)
+        if (bb.baseRef == null)
         {
-            return _state = NodeState.Failure; // Can't afford
+            // Try to find it again!
+            bb.baseRef = GameObject.FindAnyObjectByType<FireBase>();
+
+            // If it's STILL null, safely fail so it doesn't crash
+            if (bb.baseRef == null) return NodeState.Failure;
+        }
+        // 2. Are we already built?
+        if (PlankStation.Instance != null)
+        {
+            return _state = NodeState.Failure;
         }
 
-        return _state = NodeState.Success; // Let's build it!
+        // 3. Can we afford it?
+        if (bb.baseRef.GetAmount(ResourceType.Wood) < BUILD_COST_WOOD)
+        {
+            return _state = NodeState.Failure;
+        }
+
+        // Let's build it!
+        return _state = NodeState.Success;
     }
 }

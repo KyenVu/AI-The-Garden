@@ -4,21 +4,21 @@ using UnityEngine;
 public class BuildCookingStationNode : Node
 {
     private AgentBlackBoard bb;
-
     private const int BUILD_COST_FOOD = 10;
     private const int BUILD_COST_WOOD = 15;
-
     private float buildTime = 3f;
     private float timer = 0f;
 
-    public BuildCookingStationNode(AgentBlackBoard blackBoard)
-    {
-        this.bb = blackBoard;
-    }
+    public BuildCookingStationNode(AgentBlackBoard blackBoard) { this.bb = blackBoard; }
 
     public override NodeState Evaluate()
     {
-        if (!bb.mover.HasReachedDestination())
+        // --- UNIVERSAL SETUP ---
+        Transform agentTransform = bb.mlBrain != null ? bb.mlBrain.transform : bb.mover.transform;
+        GridManager grid = bb.mlBrain != null ? bb.mlBrain.gridManager : bb.mover.grid;
+        bool isMoving = bb.mlBrain != null ? false : (bb.mover != null && !bb.mover.HasReachedDestination());
+
+        if (isMoving)
         {
             bb.ui?.SetState("Moving to build site...");
             return _state = NodeState.Running;
@@ -27,10 +27,7 @@ public class BuildCookingStationNode : Node
         bb.ui?.SetState($"Building Cooking Station... ({timer:0.0}/{buildTime:0.0})");
         timer += Time.deltaTime;
 
-        if (timer < buildTime)
-        {
-            return _state = NodeState.Running;
-        }
+        if (timer < buildTime) return _state = NodeState.Running;
 
         if (CookingStation.Instance != null)
         {
@@ -50,33 +47,24 @@ public class BuildCookingStationNode : Node
         bb.baseRef.RemoveResource(ResourceType.Food, BUILD_COST_FOOD);
         bb.baseRef.RemoveResource(ResourceType.Wood, BUILD_COST_WOOD);
 
-        Vector3 buildPos = bb.mover.transform.position;
-        GameObject newStationGO = GameObject.Instantiate(
-            bb.cookingStationPrefab,
-            buildPos,
-            Quaternion.identity
-        );
+        // Uses universal agent transform
+        Vector3 buildPos = agentTransform.position;
+        GameObject newStationGO = GameObject.Instantiate(bb.cookingStationPrefab, buildPos, Quaternion.identity);
 
-        // ==========================================
-        // MISSING FIX 1: Sync Transforms so the Safety Push works!
-        // ==========================================
         Physics2D.SyncTransforms();
 
         SpriteRenderer sr = newStationGO.GetComponentInChildren<SpriteRenderer>();
-        if (sr != null)
-        {
-            sr.sortingLayerName = "Second Tile Layer";
-        }
+        if (sr != null) sr.sortingLayerName = "Second Tile Layer";
 
         Collider2D stationCollider = newStationGO.GetComponent<Collider2D>();
-        if (stationCollider != null && bb.mover.grid != null)
+        if (stationCollider != null && grid != null)
         {
-            List<TileData> stationTiles = bb.mover.grid.GetTilesUnderCollider(stationCollider);
+            List<TileData> stationTiles = grid.GetTilesUnderCollider(stationCollider);
             List<TileData> validNeighbors = new List<TileData>();
 
             foreach (TileData tile in stationTiles)
             {
-                foreach (TileData neighbor in bb.mover.grid.GetNeighbors(tile, true))
+                foreach (TileData neighbor in grid.GetNeighbors(tile, true))
                 {
                     if (neighbor.Walkable && !stationTiles.Contains(neighbor) && !validNeighbors.Contains(neighbor))
                     {
@@ -85,25 +73,21 @@ public class BuildCookingStationNode : Node
                 }
             }
 
-            TileData safeTile = bb.mover.grid.GetClosestTile(bb.mover.transform.position, validNeighbors);
-            if (safeTile != null)
-            {
-                bb.mover.transform.position = safeTile.transform.position;
-            }
+            TileData safeTile = grid.GetClosestTile(agentTransform.position, validNeighbors);
+            if (safeTile != null) agentTransform.position = safeTile.transform.position; // Snap agent outside
         }
 
-        // ==========================================
-        // MISSING FIX 2: Destroy the Build Marker! 
-        // (If you don't do this, they get stuck in a loop forever)
-        // ==========================================
-        string targetName = $"BuildSite_{bb.mover.gameObject.GetInstanceID()}";
+        string targetName = $"BuildSite_{agentTransform.gameObject.GetInstanceID()}";
         GameObject marker = GameObject.Find(targetName);
         if (marker != null) GameObject.Destroy(marker);
 
         newStationGO.name = "Cooking Station";
         bb.ui?.SetState("Cooking Station Built!");
-        bb.mover.ClearTarget();
+
+        if (bb.mover != null) bb.mover.ClearTarget();
+        if (bb.mlBrain != null) bb.mlBrain.ClearTarget();
         timer = 0;
+
         return _state = NodeState.Success;
     }
 }

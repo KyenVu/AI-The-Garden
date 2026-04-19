@@ -11,32 +11,30 @@ public class FindBaseNode : Node
     {
         if (bb.baseRef == null) return NodeState.Failure;
 
+        // --- UNIVERSAL SETUP ---
+        Transform agentTransform = bb.mlBrain != null ? bb.mlBrain.transform : bb.mover.transform;
+        GridManager grid = bb.mlBrain != null ? bb.mlBrain.gridManager : bb.mover.grid;
+
         Transform targetTransform = bb.baseRef.transform;
         string stateMessage = "Returning to Base...";
 
-        // ==========================================
-        // NEW: Route to Plank Station if carrying Wood!
-        // ==========================================
         if (PlankStation.Instance != null && bb.inventory.Wood > 0)
         {
             targetTransform = PlankStation.Instance.transform;
             stateMessage = "Moving to Plank Station...";
         }
 
-        // ==========================================
-        // Pathfind to a safe edge around the chosen building
-        // ==========================================
         Collider2D targetCollider = targetTransform.GetComponent<Collider2D>();
         TileData destinationTile = null;
 
-        if (targetCollider != null && bb.mover.grid != null)
+        if (targetCollider != null && grid != null)
         {
-            List<TileData> tilesUnder = bb.mover.grid.GetTilesUnderCollider(targetCollider);
+            List<TileData> tilesUnder = grid.GetTilesUnderCollider(targetCollider);
             List<TileData> validNeighbors = new List<TileData>();
 
             foreach (TileData tile in tilesUnder)
             {
-                foreach (TileData neighbor in bb.mover.grid.GetNeighbors(tile, true))
+                foreach (TileData neighbor in grid.GetNeighbors(tile, true))
                 {
                     if (neighbor.Walkable && !tilesUnder.Contains(neighbor) && !validNeighbors.Contains(neighbor))
                     {
@@ -44,7 +42,7 @@ public class FindBaseNode : Node
                     }
                 }
             }
-            destinationTile = bb.mover.grid.GetClosestTile(bb.mover.transform.position, validNeighbors);
+            destinationTile = grid.GetClosestTile(agentTransform.position, validNeighbors);
         }
 
         if (destinationTile == null)
@@ -53,8 +51,15 @@ public class FindBaseNode : Node
             return NodeState.Failure;
         }
 
+        // --- CRITICAL SEMESTER 2 HANDOFF ---
+        bb.destinationObject = targetTransform;
         bb.currentTarget = targetTransform;
-        bb.mover.SetDestinationTile(destinationTile, targetTransform);
+
+        // --- SEMESTER 1 PATHFINDING ---
+        if (bb.mover != null)
+        {
+            bb.mover.SetDestinationTile(destinationTile, targetTransform);
+        }
 
         bb.ui?.SetState(stateMessage);
         return NodeState.Success;

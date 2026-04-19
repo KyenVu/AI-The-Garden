@@ -2,59 +2,58 @@ using UnityEngine;
 
 public class DrinkWaterNode : Node
 {
-    private AgentStatsManager stats;
-    private AgentMover mover;
-    private AgentStateUI stateUI;
-
+    private AgentBlackBoard bb;
     private float drinkDuration = 2f;
     private float drinkTimer = 0f;
 
-    public DrinkWaterNode(AgentStatsManager stats, AgentMover mover, AgentStateUI ui)
+    public DrinkWaterNode(AgentBlackBoard bb)
     {
-        this.stats = stats;
-        this.mover = mover;
-        this.stateUI = ui;
+        this.bb = bb;
     }
 
     public override NodeState Evaluate()
     {
-        // If still moving toward water
-        if (mover.currentTarget == null || !mover.HasReachedDestination())
+        // --- UNIVERSAL SETUP ---
+        GameObject agentObj = bb.mlBrain != null ? bb.mlBrain.gameObject : bb.mover.gameObject;
+        bool isMoving = bb.mlBrain != null ? false : (bb.mover != null && !bb.mover.HasReachedDestination());
+
+        if (bb.currentTarget == null || isMoving)
         {
-            stateUI?.SetState("Moving to Water...");
+            bb.ui?.SetState("Moving to Water...");
             return _state = NodeState.Running;
         }
 
-        // Begin drinking process
-        stateUI?.SetState("Drinking...");
+        bb.ui?.SetState("Drinking...");
         drinkTimer += Time.deltaTime;
 
         if (drinkTimer >= drinkDuration)
         {
-            // Check for Natural Water Source
-            WaterSource naturalSource = mover.currentTarget.GetComponent<WaterSource>();
-
-            // Check for Built Water Station
-            WaterStation builtStation = mover.currentTarget.GetComponent<WaterStation>();
+            WaterSource naturalSource = bb.currentTarget.GetComponent<WaterSource>();
+            WaterStation builtStation = bb.currentTarget.GetComponent<WaterStation>();
 
             if (naturalSource != null)
             {
-                int hydrationGained = naturalSource.Drink(stats.drinkRate);
-                stats.DrinkWater(hydrationGained);
-                naturalSource.ReleaseClaim(mover.gameObject);
+                int hydrationGained = naturalSource.Drink(bb.stats.drinkRate);
+                bb.stats.DrinkWater(hydrationGained);
+                naturalSource.ReleaseClaim(agentObj);
             }
             else if (builtStation != null)
             {
-                // The built station script we made handles the stat logic inside DrinkWater()
-                builtStation.DrinkWater(stats);
-                builtStation.ReleaseClaim(mover.gameObject);
+                builtStation.DrinkWater(bb.stats);
+                builtStation.ReleaseClaim(agentObj);
             }
 
-            mover.ClearTarget();
+            ClearAgentTarget();
             drinkTimer = 0f;
             return _state = NodeState.Success;
         }
 
         return _state = NodeState.Running;
+    }
+
+    private void ClearAgentTarget()
+    {
+        if (bb.mover != null) bb.mover.ClearTarget();
+        if (bb.mlBrain != null) bb.mlBrain.ClearTarget();
     }
 }

@@ -5,31 +5,32 @@ public class AgentStatsManager : MonoBehaviour
     [Header("Core Stats")]
     public AgentStat health = new AgentStat { currentValue = 100, maxValue = 100 };
     public AgentStat stamina = new AgentStat { currentValue = 100, maxValue = 100, regenRate = 2f, decayRate = 0f };
-    public AgentStat hunger = new AgentStat { currentValue = 0, maxValue = 100, decayRate = 1f }; // hunger increases over time
-    public AgentStat thirst = new AgentStat { currentValue = 0, maxValue = 100, decayRate = 1.5f }; // thirst increases over time
+    public AgentStat hunger = new AgentStat { currentValue = 0, maxValue = 100, decayRate = 1f };
+    public AgentStat thirst = new AgentStat { currentValue = 0, maxValue = 100, decayRate = 1.5f };
 
     [Header("Other Stats")]
     public int drinkRate = 20;
     public int chopWoodRate = 20;
     public int foodHarvestRate = 1;
 
-
     [Header("Modifiers")]
-    public float starvationDamageRate = 2f; // HP lost per second when hunger is full
-    public float dehydrationDamageRate = 3f; // HP lost per second when thirst is full
-    public float exhaustionPenalty = 0.5f; // stamina influences speed later
+    public float starvationDamageRate = 2f;
+    public float dehydrationDamageRate = 3f;
+    public float exhaustionPenalty = 0.5f;
 
     public bool IsDead => health.currentValue <= 0f;
 
-    void Start()
+    // --- CHANGED: Now a public method so the ML Brain can call it on Episode Begin ---
+    public void ResetStats()
     {
-        // Randomize stats slightly on spawn
-        health.currentValue = Random.Range(60f, 100f);
-        stamina.currentValue = Random.Range(100f, 100f);
-        hunger.currentValue = Random.Range(60, 100f);
-        thirst.currentValue = Random.Range(60, 100f);
-    }
+        health.currentValue = health.maxValue;
+        stamina.currentValue = stamina.maxValue;
 
+        // Randomizing start stats forces the AI to check its meters immediately, 
+        // rather than blindly memorizing a routine!
+        hunger.currentValue = Random.Range(60f, 100f);
+        thirst.currentValue = Random.Range(60f, 100f);
+    }
 
     void Update()
     {
@@ -37,37 +38,18 @@ public class AgentStatsManager : MonoBehaviour
         hunger.Decrease(hunger.decayRate * Time.deltaTime);
         thirst.Decrease(thirst.decayRate * Time.deltaTime);
 
-        // 2. Decrease stamina slightly if hungry
-        //if (hunger.GetPercent() < 0.2f)
-        //    stamina.Decrease(Time.deltaTime * 0.5f);
-        //if (thirst.GetPercent() < 0.2f)
-        //    stamina.Decrease(Time.deltaTime * 0.5f);
-
-
-
-        //// 3. Regenerate stamina when idle or resting (you’ll hook this later)
-        //if (stamina.regenRate > 0)
-        //    stamina.Increase(stamina.regenRate * Time.deltaTime);
-
-        // 4. If hunger/thirst none, health decays
+        // 2. If hunger/thirst none, health decays
         if (hunger.GetPercent() <= 0f)
             health.Decrease(starvationDamageRate * Time.deltaTime);
         if (thirst.GetPercent() <= 0f)
             health.Decrease(dehydrationDamageRate * Time.deltaTime);
 
-        // Clamp and check death
+        // 3. Clamp health
         if (health.IsEmpty())
         {
             health.currentValue = 0;
-            OnDeath();
+            // We removed the Destroy() call. The ML Brain will handle death now!
         }
-    }
-
-    private void OnDeath()
-    {
-        // TODO: Replace with your agent death logic later
-        Debug.Log($"{name} has died .");
-        Destroy(gameObject, 0.2f);
     }
 
     // Helper methods for other systems
