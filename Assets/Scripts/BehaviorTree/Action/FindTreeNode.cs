@@ -42,7 +42,7 @@ public class FindTreeNode : Node
             if (grid != null)
             {
                 TileData tile = grid.GetTileAtWorldPosition(treeComponent.transform.position);
-                if (tile == null || !tile.isRevealed) continue;
+                if (tile == null) continue;
             }
 
             if (treeComponent.IsClaimed == false || treeComponent.claimedByAgent == bb.mover.gameObject)

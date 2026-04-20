@@ -43,7 +43,7 @@ public class FindFoodNode : Node
             if (grid != null)
             {
                 TileData tile = grid.GetTileAtWorldPosition(foodComponent.transform.position);
-                if (tile == null || !tile.isRevealed) continue;
+                if (tile == null) continue;
             }
 
             if (foodComponent.IsClaimed == false || foodComponent.claimedByAgent == bb.mover.gameObject)

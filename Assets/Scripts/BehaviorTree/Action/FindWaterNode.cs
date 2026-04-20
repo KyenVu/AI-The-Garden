@@ -42,7 +42,7 @@ public class FindWaterNode : Node
             if (grid != null)
             {
                 TileData tile = grid.GetTileAtWorldPosition(waterSource.transform.position);
-                if (tile == null || !tile.isRevealed) continue;
+                if (tile == null) continue;
             }
 
             if (waterSource.IsClaimed == false || waterSource.claimedByAgent == bb.mover.gameObject)
