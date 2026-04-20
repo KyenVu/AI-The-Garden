@@ -39,7 +39,7 @@ public class DrinkWaterNode : Node
             }
             else if (builtStation != null)
             {
-                builtStation.DrinkWater(bb.stats);
+                builtStation.DrinkWater(bb.stats,bb);
                 builtStation.ReleaseClaim(agentObj);
             }
 

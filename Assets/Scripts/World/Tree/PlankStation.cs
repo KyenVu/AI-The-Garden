@@ -87,13 +87,17 @@ public class PlankStation : MonoBehaviour, I_Interactable
         }
     }
 
-    public void DepositWood(int rawWoodAmount)
+    public void DepositWood(int rawWoodAmount, AgentBlackBoard bb = null)
     {
         float multiplier = multiplierByLevel.ContainsKey(level) ? multiplierByLevel[level] : 1.5f;
         storedWood += (rawWoodAmount * multiplier);
-        Debug.Log($"Processed {rawWoodAmount} wood at {multiplier}x! Total Plank Storage is now {GetWoodCount()}.");
 
-        // --- NEW: Check if we can upgrade after depositing! ---
+        // NEW: Sync knowledge if a blackboard is provided
+        if (bb != null && bb.baseRef != null)
+        {
+            bb.baseRef.SyncKnowledge(bb);
+        }
+
         CheckForAutoUpgrade();
     }
 

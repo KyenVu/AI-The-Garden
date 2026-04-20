@@ -87,14 +87,17 @@ public class WaterStation : MonoBehaviour, I_Interactable
     }
 
     // Agent interacts with this to drink
-    public int DrinkWater(AgentStatsManager stats)
+    public int DrinkWater(AgentStatsManager stats, AgentBlackBoard bb)
     {
         if (waterAvailable <= 0) return 0;
 
         // Restore 30 hydration (adjust this value as needed to match your stats)
         stats.DrinkWater(30);
         waterAvailable -= waterOutput;
-
+        if (bb != null && bb.baseRef != null)
+        {
+            bb.baseRef.SyncKnowledge(bb);
+        }
         return waterOutput;
     }
 

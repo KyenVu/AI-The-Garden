@@ -87,12 +87,19 @@ public class CookingStation : MonoBehaviour, I_Interactable
         if (claimedByAgent == agent) claimedByAgent = null;
     }
 
-    public int GatherFood(AgentStatsManager stats)
+
+    public int GatherFood(AgentStatsManager stats, AgentBlackBoard bb = null)
     {
-       
-        stats.EatFood(30); 
         if (cookedFoodAvailable <= 0) return 0;
+
+        stats.EatFood(30);
         cookedFoodAvailable -= foodOutput;
+
+        if (bb != null && bb.baseRef != null)
+        {
+            bb.baseRef.SyncKnowledge(bb);
+        }
+
         return foodOutput;
     }
 
